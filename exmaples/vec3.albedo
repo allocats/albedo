@@ -1,0 +1,46 @@
+import albedo;
+
+[align(16)]
+struct Vec3 {
+    x: f32;
+    y: f32;
+    z: f32;
+}
+
+impl Vec3 {
+    fn albedo::Op::Add(self, vec: Vec3) -> Vec3 {
+        let res: Vec3;
+
+        res.x = self.x + vec.x;
+        res.y = self.y + vec.y;
+        res.z = self.z + vec.z;
+
+        return res;
+    }
+
+    fn double(self*) {
+        self -> x *= 2;
+        self -> y *= 2;
+        self -> z *= 2;
+    }
+}
+
+fn main() {
+    let a = Vec3 {
+        .x = 0,
+        .y = 1,
+        .z = 2,
+    };
+
+    let b = Vec3 {
+        .x = 0,
+        .y = 1,
+        .z = 2,
+    };
+
+    a.double(); // equivlaent to double(&a); 
+
+    const result = a + b;
+
+    result.double(); // error! const type
+}

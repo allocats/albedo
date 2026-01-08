@@ -1,0 +1,7 @@
+build/
+
+callgrind.*
+vgcore.*
+core.*
+
+perf.*
