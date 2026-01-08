@@ -4,7 +4,6 @@
 #include "../diagnostics/diagnostics.h"
 #include "../token/token.h"
 
-#include <stdio.h>
 #include <string.h>
 
 extern AlbedoCtx albedo_ctx;
@@ -14,7 +13,7 @@ extern AlbedoCtx albedo_ctx;
 #define IS_OPERATOR(c) (char_map[(unsigned char)(c)] & 4)
 #define IS_DELIMITER(c) (char_map[(unsigned char)(c)] & 8)
 #define IS_WHITESPACE(c) (char_map[(unsigned char)(c)] & 16)
-#define IS_STRING_DELIMS(c) (char_map[(unsigned char)(c)] & 32)
+#define IS_LITERAL_DELIMS(c) (char_map[(unsigned char)(c)] & 32)
 
 #define SKIP_WHITESPACE(cursor) \
     while (IS_WHITESPACE(*cursor)) { cursor++; }
@@ -26,7 +25,10 @@ char* lex_word(char* cursor);
 char* lex_number(char* cursor);
 char* lex_op(char* cursor);
 char* lex_delim(char* cursor);
+char* lex_literal(char* cursor);
 char* lex_invalid(char* cursor, u32 index);
+
+bool is_hex_digit(char c);
 
 void lex_from_files(void) {
     for (u32 i = 0; i < albedo_ctx.file_count; i++) {
@@ -48,6 +50,8 @@ void lex_from_files(void) {
                 cursor = lex_number(cursor);
             } else if (IS_OPERATOR(c)) {
                 cursor = lex_op(cursor);
+            } else if (IS_LITERAL_DELIMS(c)) {
+                cursor = lex_literal(cursor);
             } else {
                 cursor = lex_invalid(cursor, i);
             }
@@ -136,6 +140,11 @@ char* lex_word(char* cursor) {
                 break;
             }
 
+            if (matches("impl", start, length)) {
+                token -> kind = T_Impl;
+                break;
+            }
+
             if (matches("import", start, length)) {
                 token -> kind = T_Import;
                 break;
@@ -191,6 +200,11 @@ char* lex_word(char* cursor) {
         } break;
 
         case 's': {
+            if (matches("self", start, length)) {
+                token -> kind = T_Self;
+                break;
+            }
+
             if (matches("static", start, length)) {
                 token -> kind = T_Static;
                 break;
@@ -223,12 +237,248 @@ char* lex_word(char* cursor) {
 
 char* lex_number(char* cursor) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
+    Tokens* tokens = &albedo_ctx.tokens;
+
+    Token* token = &tokens -> items[tokens -> count++];
+
+    char* start = cursor;
+
+    bool is_float = false;
+
+    while (IS_DIGIT(*cursor) || *cursor == '_') {
+        cursor++;
+    }
+
+    if (*cursor == '.' && IS_DIGIT(*(cursor + 1))) {
+        is_float = true;
+        cursor++;
+
+        while (IS_DIGIT(*cursor)) {
+            cursor++;
+        }
+    }
+
+    token -> kind = is_float ? T_FloatLit : T_IntLit;
+    token -> lexeme = start;
+    token -> length = cursor - start;
 
     return cursor;
 }
 
 char* lex_op(char* cursor) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
+    Tokens* tokens = &albedo_ctx.tokens;
+
+    Token* token = &tokens -> items[tokens -> count++];
+
+    char* start = cursor++;
+
+    switch (*start) {
+        case '+': {
+            if (*cursor == '=') {
+                token -> kind = T_PlusEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Plus;
+        } break;
+
+        case '-': {
+            if (*cursor == '=') {
+                token -> kind = T_MinusEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Minus;
+        } break;
+
+        case '*': {
+            if (*cursor == '=') {
+                token -> kind = T_StarEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Star;
+        } break;
+
+        case '/': {
+            if (*cursor == '/') {
+                tokens -> count--;
+
+                while (*cursor != 0 && *cursor != '\n') {
+                    cursor++;
+                }
+
+                cursor++;
+
+                break;
+            }
+
+            if (*cursor == '*') {
+                tokens -> count--;
+
+                cursor++;
+
+                u32 depth = 1;
+
+                while (*cursor != 0 && depth > 0) {
+                    if (*cursor == '/' && *(cursor + 1) == '*') {
+                        depth++;
+                        cursor += 2;
+                    } else if (*cursor == '*' && *(cursor + 1) == '/') {
+                        depth--;
+                        cursor += 2;
+                    } else {
+                        cursor++;
+                    }
+                }
+
+                if (depth > 0) {
+                    // emit error: unterminated block comment
+                }
+            }
+
+            if (*cursor == '=') {
+                token -> kind = T_SlashEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Slash;
+        } break;
+
+        case '%': {
+            if (*cursor == '=') {
+                token -> kind = T_PercentEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Percent;
+        } break;
+
+        case '!': {
+            if (*cursor == '=') {
+                token -> kind = T_BangEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Bang;
+        } break;
+
+        case '~': {
+            if (*cursor == '=') {
+                token -> kind = T_NotEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Not;
+        } break;
+
+        case '&': {
+            if (*cursor == '=') {
+                token -> kind = T_AndEq;
+                cursor++;
+                break;
+            } 
+
+            if (*cursor == '&') {
+                token -> kind = T_CondAnd;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_And;
+        } break;
+
+        case '|': {
+            if (*cursor == '=') {
+                token -> kind = T_OrEq;
+                cursor++;
+                break;
+            } 
+
+            if (*cursor == '|') {
+                token -> kind = T_CondOr;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Or;
+        } break;
+
+        case '^': {
+            if (*cursor == '=') {
+                token -> kind = T_XorEq;
+                cursor++;
+                break;
+            } 
+
+            token -> kind = T_Xor;
+        } break;
+
+        case '>': {
+            if (*cursor == '=') {
+                token -> kind = T_GtEq;
+                cursor++;
+                break;
+            }
+
+            if (*cursor == '>') {
+                token -> kind = T_Shr;
+                cursor++;
+
+                if (*cursor == '=') {
+                    token -> kind = T_ShrEq;
+                    cursor++;
+                }
+                
+                break;
+            }
+
+            token -> kind = T_Gt;
+        } break;
+
+        case '<': {
+            if (*cursor == '=') {
+                token -> kind = T_LtEq;
+                cursor++;
+                break;
+            }
+
+            if (*cursor == '<') {
+                token -> kind = T_Shl;
+                cursor++;
+
+                if (*cursor == '=') {
+                    token -> kind = T_ShlEq;
+                    cursor++;
+                }
+                
+                break;
+            }
+
+            token -> kind = T_Lt;
+        } break;
+
+        case '.': {
+            if (*cursor == '.') {
+                token -> kind = T_DotDot;
+                cursor++;
+                break;
+            }
+            
+            token -> kind = T_Dot;
+        } break;
+    }
+
+    token -> lexeme = start;
+    token -> length = cursor - start;
 
     return cursor;
 }
@@ -261,7 +511,7 @@ char* lex_delim(char* cursor) {
 
             if (*cursor == ':') {
                 token -> kind = T_ColonColon;
-                token -> length = cursor - start;
+                token -> length = 2;
                 cursor++;
                 break;
             }
@@ -299,6 +549,124 @@ char* lex_delim(char* cursor) {
     return cursor;
 }
 
+char* lex_literal(char* cursor) {
+    extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
+
+    Tokens* tokens = &albedo_ctx.tokens;
+
+    Token* token = &tokens -> items[tokens -> count++];
+
+    char* start = cursor;
+    char delim = *start;
+
+    cursor++;
+
+    bool has_error = false;
+
+    while (*cursor != '\0' && *cursor != delim) {
+        if (*cursor == '\\') {
+            cursor++;
+
+            if (*cursor == '\0') {
+                // emit error: escape at eof
+                break;
+            }
+
+            switch (*cursor) {
+                case 'n':
+                case 'r':
+                case 't':
+                case '\\':
+                case '\'':
+                case '\"':
+                case '0': {
+                    cursor++; 
+                } break;
+
+                case 'x': {
+                    cursor++;
+
+                    if (!is_hex_digit(*cursor) || !is_hex_digit(*(cursor + 1))) {
+                        // emit error: invaild hex number
+                        has_error = true;
+                    } else {
+                        cursor += 2;
+                    }
+                } break;
+
+                case 'u': {
+                    cursor++;
+
+                    if (*cursor != '{') {
+                        // emit error: expected '{' after \u
+                        has_error = true;
+                    } else {
+                        cursor++;
+
+                        u32 hex_count = 0;
+
+                        while (is_hex_digit(*cursor) && hex_count < 6) {
+                            cursor++;
+                            hex_count++;
+                        }
+
+                        if (*cursor != '}' || hex_count == 0) {
+                            // emit error: invalid unicode escape
+                            has_error = true;
+                        } else {
+                            cursor++;
+                        }
+                    }
+                } break;
+
+                default: {
+                    // emit error: unknown escape sequence
+                    has_error = true;
+                    cursor++;
+                } break;
+            }
+        } else if (*cursor == '\n' || *cursor == '\r') {
+            // emit error: new line in string
+            has_error = true;
+            break;
+        } else {
+            cursor++;
+        }
+    }
+
+
+    if (*cursor != delim) {
+        // emit error: unterminated
+        has_error = true;
+    } else {
+        cursor++;
+
+        usize lit_length = (cursor - 1) - (start + 1);
+
+        if (delim == '\'') {
+            if (lit_length == 0) {
+                // emit error: empty literal
+                has_error = true;
+            } else if (lit_length > 1 && *(start + 1) != '\\') {
+                // emit error: invalid char
+                has_error = true;
+            }
+        }
+    }
+
+    usize length = cursor - start;
+
+    token -> kind = delim == '"' ? T_StrLit : T_CharLit;
+    token -> lexeme = start;
+    token -> length = length;
+
+    if (has_error) {
+        token -> kind = T_Error;
+    }
+
+    return cursor;
+}
+
 char* lex_invalid(char* cursor, u32 index) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
 
@@ -310,7 +678,7 @@ char* lex_invalid(char* cursor, u32 index) {
         !IS_ALPHA(*cursor)            &&
         !IS_DIGIT(*cursor)            &&
         !IS_OPERATOR(*cursor)         &&
-        !IS_STRING_DELIMS(*cursor)    &&
+        !IS_LITERAL_DELIMS(*cursor)   &&
         !IS_DELIMITER(*cursor)        &&
         !IS_WHITESPACE(*cursor)
     ) {
@@ -326,4 +694,10 @@ char* lex_invalid(char* cursor, u32 index) {
     err_unknown_token(token, index);
 
     return cursor;
+}
+
+inline bool is_hex_digit(char c) {
+    return (c >= '0' && c <= '9') || 
+           (c >= 'a' && c <= 'f') || 
+           (c >= 'A' && c <= 'F');
 }

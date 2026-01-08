@@ -7,6 +7,7 @@
 #include "buffers/buffers.h"
 #include "diagnostics/diagnostics.h"
 #include "lexer/lexer.h"
+#include "token/token.h"
 #include "utils/ansi_codes.h"
 #include "utils/types.h"
 
@@ -45,6 +46,8 @@ i32 main(i32 argc, char* argv[]) {
     }
 
     lex_from_files();
+
+    print_tokens(albedo_ctx.tokens);
 
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();

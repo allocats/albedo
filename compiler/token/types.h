@@ -15,6 +15,9 @@
     X(T_Struct)     \
     X(T_Enum)       \
                     \
+    X(T_Impl)       \
+    X(T_Self)       \
+                    \
     X(T_Fn)         \
                     \
     X(T_Let)        \
@@ -49,6 +52,8 @@
     X(T_ColonColon) \
                     \
     X(T_Dot)        \
+    X(T_DotDot)     \
+                    \
     X(T_Comma)      \
                     \
     X(T_Bang)       \
@@ -98,7 +103,13 @@
     X(T_Shr)        \
     X(T_ShrEq)      \
                     \
+    X(T_StrLit)     \
+    X(T_CharLit)    \
+    X(T_FloatLit)   \
+    X(T_IntLit)     \
+                    \
     X(T_Unknown)    \
+    X(T_Error)      \
     X(T_Eof)        \
 
 typedef enum {
