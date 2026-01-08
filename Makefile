@@ -1,5 +1,5 @@
 CC = clang
-CF = -Wall -Wextra -march=native
+CF = -Wall -Wextra -march=native -g
 
 SRC_DIR = compiler
 BUILD_DIR = build

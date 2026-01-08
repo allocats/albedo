@@ -22,6 +22,7 @@
 */
 
 #define nullptr     ((void*)0)
+#define null        ((void*)0)
 
 typedef int8_t      i8;
 typedef int16_t     i16;

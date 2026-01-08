@@ -4,7 +4,7 @@
 
 #include "../utils/types.h"
 
-#define DIAG_MAX 32
+#define DIAG_SUPPRESS_THRESHOLD 32
 
 typedef enum {
     DIAG_ERR,
@@ -13,21 +13,22 @@ typedef enum {
 } DiagKind;
 
 typedef struct {
-    u32 line;
-    u32 col;
+    DiagKind kind;
 
     u32 index;
 
-    const char* path;
+    u32 line;
+    u32 col;
+    u32 len;
+
     const char* msg;
     const char* help;
-
-    DiagKind kind;
 } Diagnostic;
 
 typedef struct {
+    Diagnostic* diags;
     u32 diag_count;
-    Diagnostic diags[DIAG_MAX];
+    u32 diag_capacity;
 } DiagnosticCtx;
 
 #endif // !ALBEDO_DIAGNOSTICS_TYPES_H

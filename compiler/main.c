@@ -5,6 +5,7 @@
 #include "albedo/types.h"
 #include "arena/arena.h"
 #include "buffers/buffers.h"
+#include "diagnostics/diagnostics.h"
 #include "lexer/lexer.h"
 #include "utils/ansi_codes.h"
 #include "utils/types.h"
@@ -44,6 +45,10 @@ i32 main(i32 argc, char* argv[]) {
     }
 
     lex_from_files();
+
+    if (albedo_ctx.error_count > 0) {
+        diagnostics_print();
+    }
 
     buffer_cleanup();
 }

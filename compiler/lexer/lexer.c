@@ -1,8 +1,10 @@
 #include "lexer.h"
 
 #include "../albedo/albedo.h"
+#include "../diagnostics/diagnostics.h"
 #include "../token/token.h"
 
+#include <stdio.h>
 #include <string.h>
 
 extern AlbedoCtx albedo_ctx;
@@ -15,7 +17,7 @@ extern AlbedoCtx albedo_ctx;
 #define IS_STRING_DELIMS(c) (char_map[(unsigned char)(c)] & 32)
 
 #define SKIP_WHITESPACE(cursor) \
-    while (IS_WHITESPACE(*cursor)) cursor++
+    while (IS_WHITESPACE(*cursor)) { cursor++; }
 
 #define matches(str, start, length) \
     ((length) == sizeof(str) - 1 && strncmp((str), (start), (length)) == 0)
@@ -24,15 +26,15 @@ char* lex_word(char* cursor);
 char* lex_number(char* cursor);
 char* lex_op(char* cursor);
 char* lex_delim(char* cursor);
-char* lex_invalid(char* cursor);
+char* lex_invalid(char* cursor, u32 index);
 
 void lex_from_files(void) {
-    for (u32 i = 0; albedo_ctx.file_count; i++) {
+    for (u32 i = 0; i < albedo_ctx.file_count; i++) {
         FileBuffer file = albedo_ctx.files[i];
 
         char* cursor = file.buffer;
         char* end = file.buffer + file.size;
-        
+
         while (cursor < end) {
             SKIP_WHITESPACE(cursor);
 
@@ -47,7 +49,7 @@ void lex_from_files(void) {
             } else if (IS_OPERATOR(c)) {
                 cursor = lex_op(cursor);
             } else {
-                cursor = lex_invalid(cursor);
+                cursor = lex_invalid(cursor, i);
             }
         }
     }
@@ -259,7 +261,7 @@ char* lex_delim(char* cursor) {
 
             if (*cursor == ':') {
                 token -> kind = T_ColonColon;
-                token -> length = 2;
+                token -> length = cursor - start;
                 cursor++;
                 break;
             }
@@ -297,24 +299,22 @@ char* lex_delim(char* cursor) {
     return cursor;
 }
 
-char* lex_invalid(char* cursor) {
+char* lex_invalid(char* cursor, u32 index) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
 
     Tokens* tokens = &albedo_ctx.tokens;
 
     char* start = cursor;
 
-    char c = *cursor++;
-
     while (
-        !IS_ALPHA(c)            &&
-        !IS_DIGIT(c)            &&
-        !IS_OPERATOR(c)         &&
-        !IS_STRING_DELIMS(c)    &&
-        !IS_DELIMITER(c)        &&
-        !IS_WHITESPACE(c)
+        !IS_ALPHA(*cursor)            &&
+        !IS_DIGIT(*cursor)            &&
+        !IS_OPERATOR(*cursor)         &&
+        !IS_STRING_DELIMS(*cursor)    &&
+        !IS_DELIMITER(*cursor)        &&
+        !IS_WHITESPACE(*cursor)
     ) {
-        c = (*cursor)++;
+        cursor++;
     }
 
     Token* token = &tokens -> items[tokens -> count++];
@@ -323,7 +323,7 @@ char* lex_invalid(char* cursor) {
     token -> lexeme = start;
     token -> length = cursor - start;
 
-    // emit error
+    err_unknown_token(token, index);
 
     return cursor;
 }

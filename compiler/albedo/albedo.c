@@ -18,7 +18,13 @@ void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     albedo_ctx.error_count = 0;
     albedo_ctx.output_path = "./a.out";
 
+    albedo_ctx.tokens.items = arena_alloc(arena, sizeof(Token) * 64);
+    albedo_ctx.tokens.capacity = 64;
+    albedo_ctx.tokens.count = 0;
+
     diag_ctx.diag_count = 0;
+    diag_ctx.diag_capacity = 32;
+    diag_ctx.diags = arena_alloc(arena, sizeof(Diagnostic) * 32);
 
     for (i32 i = 1; i < argc; i++) {
         if (argv[i][0] != '-') {
