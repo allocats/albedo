@@ -5,10 +5,8 @@ struct Vec3 {
     x: f32;
     y: f32;
     z: f32;
-}
 
-impl Vec3 {
-    fn albedo::Op::Add(self, vec: Vec3) -> Vec3 {
+    fn albedo::Op::Add(self, vec: Vec3): Vec3 {
         let res: Vec3;
 
         res.x = self.x + vec.x;
@@ -18,7 +16,7 @@ impl Vec3 {
         return res;
     }
 
-    fn double(self*) {
+    fn double(&self) {
         self -> x *= 2;
         self -> y *= 2;
         self -> z *= 2;

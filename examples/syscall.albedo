@@ -1,0 +1,4 @@
+fn println(s: str): isize {
+    const n = "%(s)\n"; 
+    return syscall(1, 1, n, n.len());
+}

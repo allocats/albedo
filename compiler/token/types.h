@@ -15,7 +15,6 @@
     X(T_Struct)     \
     X(T_Enum)       \
                     \
-    X(T_Impl)       \
     X(T_Self)       \
                     \
     X(T_Fn)         \
@@ -23,6 +22,8 @@
     X(T_Let)        \
     X(T_Const)      \
     X(T_Static)     \
+                    \
+    X(T_As)         \
                     \
     X(T_For)        \
     X(T_In)         \

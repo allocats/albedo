@@ -1,0 +1,19 @@
+import std::mem;
+
+const GROWTH_FACTOR: f32 = 2;
+
+struct Vec<T> {
+    items: T*;
+    count: usize;
+    capacity: usize;
+
+    fn push(&mut self, item: T) {
+        if self.count >= self.capacity {
+            self.capacity *= GROWTH_FACTOR;
+            self.items = realloc(self.items, sizeof(T) * self.capacity);
+        }
+
+        self.items[self.count]= item;
+        self.count += 1;
+    }
+}

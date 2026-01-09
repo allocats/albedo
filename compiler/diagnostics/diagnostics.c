@@ -1,12 +1,12 @@
 #include "diagnostics.h"
 
 #include "../albedo/types.h"
+#include "../lexer/types.h"
 #include "../utils/ansi_codes.h"
 #include "../utils/macros.h"
 #include "types.h"
 
 #include <stdio.h>
-#include <threads.h>
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
@@ -90,6 +90,84 @@ void err_unknown_token(Token* token, u32 index) {
     diag -> line = line;
     diag -> col = col;
     diag -> len = token -> length;
+
+    albedo_ctx.error_count++;
+}
+
+void err_unterminated_delimiter(Token* token, u32 index, DelimType type) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+
+    switch (type) {
+        case DELIM_STRING: {
+            diag -> msg = "missing closing string delimiter '\"'";
+        } break;
+
+        case DELIM_CHAR: {
+            diag -> msg = "missing closing char delimiter '''";
+        } break;
+
+        case DELIM_COMMENT: {
+            diag -> msg = "missing closing block comment delimiter '*/'";
+        } break;
+    }
+
+    diag -> help = "add missing closing delimiter";
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < token -> lexeme) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+    diag -> len = type == DELIM_COMMENT ? 2 : 1;
+
+    albedo_ctx.error_count++;
+}
+
+void err_invalid_escape_sequence(char* start, usize length, char* help, u32 index) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+    diag -> msg = "invalid escape sequence";
+    diag -> help = help;
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < start) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+    diag -> len = length;
 
     albedo_ctx.error_count++;
 }
@@ -248,7 +326,7 @@ void diagnostics_print(void) {
         if (diag.help) {
             fprintf(
                 stderr,
-                "%s%shelp: %s%s",
+                "%s%s help: %s%s",
                 ANSI_BOLD,
                 ANSI_GREEN,
                 diag.help,

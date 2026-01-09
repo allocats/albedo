@@ -3,6 +3,7 @@
 #include "../albedo/albedo.h"
 #include "../diagnostics/diagnostics.h"
 #include "../token/token.h"
+#include "types.h"
 
 #include <string.h>
 
@@ -23,9 +24,9 @@ extern AlbedoCtx albedo_ctx;
 
 char* lex_word(char* cursor);
 char* lex_number(char* cursor);
-char* lex_op(char* cursor);
 char* lex_delim(char* cursor);
-char* lex_literal(char* cursor);
+char* lex_op(char* cursor, u32 index);
+char* lex_literal(char* cursor, u32 index);
 char* lex_invalid(char* cursor, u32 index);
 
 bool is_hex_digit(char c);
@@ -49,9 +50,9 @@ void lex_from_files(void) {
             } else if (IS_DIGIT(c)) {
                 cursor = lex_number(cursor);
             } else if (IS_OPERATOR(c)) {
-                cursor = lex_op(cursor);
+                cursor = lex_op(cursor, i);
             } else if (IS_LITERAL_DELIMS(c)) {
-                cursor = lex_literal(cursor);
+                cursor = lex_literal(cursor, i);
             } else {
                 cursor = lex_invalid(cursor, i);
             }
@@ -78,6 +79,15 @@ char* lex_word(char* cursor) {
     token -> length = length;
 
     switch (*start) {
+        case 'a': {
+            if (matches("as", start, length)) {
+                token -> kind = T_As;
+                break;
+            }
+
+            token -> kind = T_Ident;
+        } break;
+
         case 'b': {
             if (matches("break", start, length)) {
                 token -> kind = T_Break;
@@ -140,11 +150,6 @@ char* lex_word(char* cursor) {
                 break;
             }
 
-            if (matches("impl", start, length)) {
-                token -> kind = T_Impl;
-                break;
-            }
-
             if (matches("import", start, length)) {
                 token -> kind = T_Import;
                 break;
@@ -168,13 +173,13 @@ char* lex_word(char* cursor) {
         } break;
 
         case 'm': {
-            if (matches("module", start, length)) {
-                token -> kind = T_Module;
+            if (matches("match", start, length)) {
+                token -> kind = T_Match;
                 break;
             }
 
-            if (matches("match", start, length)) {
-                token -> kind = T_Match;
+            if (matches("module", start, length)) {
+                token -> kind = T_Module;
                 break;
             }
 
@@ -205,13 +210,13 @@ char* lex_word(char* cursor) {
                 break;
             }
 
-            if (matches("static", start, length)) {
-                token -> kind = T_Static;
+            if (matches("struct", start, length)) {
+                token -> kind = T_Struct;
                 break;
             }
 
-            if (matches("struct", start, length)) {
-                token -> kind = T_Struct;
+            if (matches("static", start, length)) {
+                token -> kind = T_Static;
                 break;
             }
 
@@ -265,7 +270,7 @@ char* lex_number(char* cursor) {
     return cursor;
 }
 
-char* lex_op(char* cursor) {
+char* lex_op(char* cursor, u32 index) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
     Tokens* tokens = &albedo_ctx.tokens;
 
@@ -337,7 +342,9 @@ char* lex_op(char* cursor) {
                 }
 
                 if (depth > 0) {
-                    // emit error: unterminated block comment
+                    err_unterminated_delimiter(token, index, DELIM_COMMENT);
+                    token -> kind = T_Error;
+                    return cursor;
                 }
             }
 
@@ -549,7 +556,7 @@ char* lex_delim(char* cursor) {
     return cursor;
 }
 
-char* lex_literal(char* cursor) {
+char* lex_literal(char* cursor, u32 index) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
 
     Tokens* tokens = &albedo_ctx.tokens;
@@ -557,6 +564,9 @@ char* lex_literal(char* cursor) {
     Token* token = &tokens -> items[tokens -> count++];
 
     char* start = cursor;
+    
+    token -> lexeme = start;
+
     char delim = *start;
 
     cursor++;
@@ -565,12 +575,10 @@ char* lex_literal(char* cursor) {
 
     while (*cursor != '\0' && *cursor != delim) {
         if (*cursor == '\\') {
-            cursor++;
+            char* seq_start = cursor;
+            usize seq_length = 1;
 
-            if (*cursor == '\0') {
-                // emit error: escape at eof
-                break;
-            }
+            cursor++;
 
             switch (*cursor) {
                 case 'n':
@@ -587,7 +595,15 @@ char* lex_literal(char* cursor) {
                     cursor++;
 
                     if (!is_hex_digit(*cursor) || !is_hex_digit(*(cursor + 1))) {
-                        // emit error: invaild hex number
+                        seq_length = (cursor + 1) - seq_start + 1;
+
+                        err_invalid_escape_sequence(
+                            seq_start,
+                            seq_length,
+                            "add a valid hex number here",
+                            index
+                        );
+
                         has_error = true;
                     } else {
                         cursor += 2;
@@ -636,7 +652,8 @@ char* lex_literal(char* cursor) {
 
 
     if (*cursor != delim) {
-        // emit error: unterminated
+        DelimType type = delim == '\'' ? DELIM_CHAR : DELIM_STRING;
+        err_unterminated_delimiter(token, index, type);
         has_error = true;
     } else {
         cursor++;
@@ -657,7 +674,6 @@ char* lex_literal(char* cursor) {
     usize length = cursor - start;
 
     token -> kind = delim == '"' ? T_StrLit : T_CharLit;
-    token -> lexeme = start;
     token -> length = length;
 
     if (has_error) {

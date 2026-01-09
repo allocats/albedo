@@ -4,6 +4,12 @@
 
 #include "../utils/types.h"
 
+typedef enum {
+    DELIM_STRING,
+    DELIM_CHAR,
+    DELIM_COMMENT,
+} DelimType;
+
 static const u8 char_map[256] = {
     ['0' ... '9'] = 1,
 
