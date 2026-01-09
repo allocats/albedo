@@ -7,7 +7,7 @@ struct Vec<T> {
     count: usize;
     capacity: usize;
 
-    fn push(&mut self, item: T) {
+    fn push(&self, item: T) {
         if self.count >= self.capacity {
             self.capacity *= GROWTH_FACTOR;
             self.items = realloc(self.items, sizeof(T) * self.capacity);
