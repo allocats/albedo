@@ -1,5 +1,6 @@
 build/
 
+cachegrind.*
 callgrind.*
 vgcore.*
 core.*

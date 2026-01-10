@@ -10,7 +10,7 @@
     X(T_Module)     \
     X(T_Import)     \
                     \
-    X(T_Private)    \
+    X(T_Extern)     \
                     \
     X(T_Struct)     \
     X(T_Enum)       \
@@ -38,6 +38,10 @@
     X(T_Continue)   \
                     \
     X(T_Return)     \
+                    \
+    X(T_Null)       \
+    X(T_True)       \
+    X(T_False)      \
                     \
     X(T_LParen)     \
     X(T_RParen)     \

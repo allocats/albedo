@@ -122,6 +122,11 @@ char* lex_word(char* cursor) {
                 break;
             }
 
+            if (matches("extern", start, length)) {
+                token -> kind = T_Extern;
+                break;
+            }
+
             token -> kind = T_Ident;
         } break;
 
@@ -133,6 +138,11 @@ char* lex_word(char* cursor) {
 
             if (matches("for", start, length)) {
                 token -> kind = T_For;
+                break;
+            }
+
+            if (matches("false", start, length)) {
+                token -> kind = T_False;
                 break;
             }
 
@@ -186,9 +196,9 @@ char* lex_word(char* cursor) {
             token -> kind = T_Ident;
         } break;
 
-        case 'p': {
-            if (matches("private", start, length)) {
-                token -> kind = T_Private;
+        case 'n': {
+            if (matches("null", start, length)) {
+                token -> kind = T_Null;
                 break;
             }
 
@@ -217,6 +227,15 @@ char* lex_word(char* cursor) {
 
             if (matches("static", start, length)) {
                 token -> kind = T_Static;
+                break;
+            }
+
+            token -> kind = T_Ident;
+        } break;
+
+        case 't': {
+            if (matches("true", start, length)) {
+                token -> kind = T_True;
                 break;
             }
 
@@ -614,7 +633,13 @@ char* lex_literal(char* cursor, u32 index) {
                     cursor++;
 
                     if (*cursor != '{') {
-                        // emit error: expected '{' after \u
+                        err_invalid_escape_sequence(
+                            seq_start + 2,
+                            seq_length,
+                            "add an opening '{' here",
+                            index
+                        );
+
                         has_error = true;
                     } else {
                         cursor++;
@@ -626,8 +651,25 @@ char* lex_literal(char* cursor, u32 index) {
                             hex_count++;
                         }
 
-                        if (*cursor != '}' || hex_count == 0) {
-                            // emit error: invalid unicode escape
+                        seq_length = cursor - seq_start;
+
+                        if (*cursor != '}') {
+                            err_invalid_escape_sequence(
+                                seq_start + seq_length,
+                                1,
+                                "add a closing '}' at the end of the sequence",
+                                index
+                            );
+
+                            has_error = true;
+                        } else if (hex_count == 0) {
+                            err_invalid_escape_sequence(
+                                seq_start + seq_length,
+                                1,
+                                "add escape sequence code",
+                                index
+                            );
+
                             has_error = true;
                         } else {
                             cursor++;
@@ -636,9 +678,10 @@ char* lex_literal(char* cursor, u32 index) {
                 } break;
 
                 default: {
-                    // emit error: unknown escape sequence
-                    has_error = true;
                     cursor++;
+                    seq_length = cursor - seq_start;
+                    err_invalid_escape_sequence(seq_start, seq_length, null, index);
+                    has_error = true;
                 } break;
             }
         } else if (*cursor == '\n' || *cursor == '\r') {
