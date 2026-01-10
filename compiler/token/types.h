@@ -133,8 +133,8 @@ typedef struct {
 
 typedef struct {
     Token* items;
-    u32 count;
-    u32 capacity;
+    usize count;
+    usize capacity;
 } Tokens;
 
 #endif // !ALBEDO_TEN_TYPES_H

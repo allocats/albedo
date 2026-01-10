@@ -42,7 +42,7 @@ typedef double      f64;
 typedef long double f128;
 
 typedef size_t      usize;
-typedef ssize_t     ssize;
+typedef ssize_t     isize;
 
 /*
 *

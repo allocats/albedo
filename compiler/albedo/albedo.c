@@ -8,6 +8,9 @@
 AlbedoCtx albedo_ctx = {0};
 DiagnosticCtx diag_ctx = {0};
 
+#define TOKEN_INIT_CAPACITY 256
+#define AST_INIT_CAPACITY 64
+
 void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     albedo_ctx.arena = arena;
 
@@ -18,9 +21,13 @@ void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     albedo_ctx.error_count = 0;
     albedo_ctx.output_path = "./a.out";
 
-    albedo_ctx.tokens.items = arena_alloc(arena, sizeof(Token) * 64);
-    albedo_ctx.tokens.capacity = 64;
+    albedo_ctx.tokens.items = arena_alloc(arena, sizeof(Token) * TOKEN_INIT_CAPACITY);
+    albedo_ctx.tokens.capacity = TOKEN_INIT_CAPACITY;
     albedo_ctx.tokens.count = 0;
+
+    albedo_ctx.ast.nodes = arena_alloc(arena, sizeof(AstNode*) * AST_INIT_CAPACITY);
+    albedo_ctx.ast.count = 0;
+    albedo_ctx.ast.capacity = AST_INIT_CAPACITY;
 
     diag_ctx.diag_count = 0;
     diag_ctx.diag_capacity = 32;

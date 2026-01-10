@@ -3,6 +3,7 @@
 #define ALBEDO_TYPES_H
 
 #include "../arena/arena.h"
+#include "../ast_parser/types.h"
 #include "../buffers/types.h"
 #include "../token/types.h"
 
@@ -16,6 +17,7 @@ typedef struct {
     u32 file_capacity;
 
     Tokens tokens;
+    ParseTree ast;
 
     u32 error_count;
 

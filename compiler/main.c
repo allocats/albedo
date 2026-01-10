@@ -51,7 +51,11 @@ i32 main(i32 argc, char* argv[]) {
 
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();
+        buffer_cleanup();
+        return 1;
     }
 
     buffer_cleanup();
+
+    return 0;
 }
