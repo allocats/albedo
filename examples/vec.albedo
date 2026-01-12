@@ -1,19 +1,58 @@
 import <std/mem>;
 
-const GROWTH_FACTOR: f32 = 2;
+const GROWTH_FACTOR: f32 = 1.5;
 
 struct Vec<T> {
     items: T*;
     count: usize;
     capacity: usize;
+}
 
-    fn push(&self, item: T) {
-        if self.count >= self.capacity {
-            self.capacity *= GROWTH_FACTOR;
-            self.items = realloc(self.items, sizeof(T) * self.capacity);
+namespace Vec {
+    fn push(self: *Vec<T>, item: T) {
+        if self -> count >= self -> capacity {
+            self -> capacity *= GROWTH_FACTOR;
+            self -> items = realloc(self -> items, sizeof(T) * self -> capacity);
         }
 
-        self.items[self.count]= item;
-        self.count += 1;
+        self -> items[self -> count] = item;
+        self -> count += 1;
     }
+
+    fn get(self: const* Vec<T>, index: u32): T {
+        return self -> items[index];
+    }
+
+    fn get_ref(self: const* Vec<T>, index: u32): *T {
+        return &self -> items[index];
+    }
+
+    fn print_by_ptr(self: const* Vec<T>) {
+        for item in self -> items {
+            println("%(item)");
+        }
+    }
+
+    fn print_by_copy(self: const Vec<T>) {
+        for item in self.items {
+            println("%(item)");
+        }
+    }
+}
+
+fn main() {
+    let vec: Vec<i32> = Vec<i32> {
+        .items = alloc(32 * sizeof(i32));
+        .count = 0;
+        .capacity = 32;
+    };
+
+    defer free(vec.items);
+    
+    // 'Vec.' is optional, only forced if there is a clash
+    Vec.push(&vec, 67);
+    print_by_ptr(&vec);
+    print_by_copy(vec);
+
+    let x: *i32 = get_ref(const &vec, 0);
 }

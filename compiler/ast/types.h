@@ -134,31 +134,9 @@ typedef struct {
     u16 method_capacity;
 } AstStruct;
 
-typedef enum {
-    VARIANT_UNIT,
-    VARIAMT_TUPLE,
-    VARIANT_STRUCT
-} VariantKind;
-
 typedef struct {
     char* name_ptr;
     usize name_len;
-
-    VariantKind kind;
-
-    union {
-        struct {
-            AstSpan* types;
-            u8 type_count;
-            u8 type_capacity;
-        } tuple;
-
-        struct {
-            AstField* fiels;
-            u16 field_count;
-            u16 field_capacity;
-        } struct_fields;
-    };
 
     // Optional value
     // Example
@@ -175,15 +153,22 @@ typedef struct {
 
     // This is optional, it can only be integers, both signed 
     // and unsigned, BUT if this is not included in the source code 
-    // then enums are treated like Rust enums, tagged enums if you will. 
-    // If there is a specified integer type then it is treated like 
-    // C style enums, where it is just an integer underneath
+    // then enums are as signed 32 bit integers.
     AstSpan type;
 
     AstEnumVariant* variants;
     u32 variant_count;
     u32 variant_capacity;
 } AstEnum;
+
+typedef struct {
+    char* name_ptr;
+    usize name_len;
+
+    AstField* fields;
+    u32 field_count;
+    u32 field_capacity;
+} AstUnion;
 
 typedef struct {
     char* abi_ptr;
