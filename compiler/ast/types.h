@@ -380,17 +380,6 @@ typedef struct {
     // This should point to an ident
     AstNode* target;
 
-    AstNode* method;
-
-    AstNode** args;
-    u8 arg_count;
-    u8 arg_capacity;
-} AstMethodCall;
-
-typedef struct {
-    // This should point to an ident
-    AstNode* target;
-
     char* field_ptr;
     usize field_len;
 } AstMemberAccess;
@@ -452,7 +441,6 @@ typedef struct AstNode {
         AstIdent ident;
         AstLiteral literal;
         AstFnCall fn_call;
-        AstMethodCall method_call;
         AstMemberAccess member_access;
         AstStructInit struct_init;
         AstIndex index_access;
