@@ -170,6 +170,42 @@ typedef struct {
     u32 field_capacity;
 } AstUnion;
 
+typedef enum {
+    VariantUnit,
+    VariantTuple,
+    VariantStruct,
+} VariantKind;
+
+typedef struct {
+    char* name_ptr;
+    usize name_len;
+
+    VariantKind kind;
+
+    union {
+        struct {
+            AstSpan* types;
+            u8 type_count;
+            u8 type_capacity;
+        } tuple;
+
+        struct {
+            AstField* fields;
+            u8 field_count;
+            u8 field_capacity;
+        } struct_fields;
+    };
+} AstTunionVariant;
+
+typedef struct {
+    char* name_ptr;
+    usize name_len;
+
+    AstTunionVariant* variants;
+    u32 variant_count;
+    u32 variant_capacity;
+} AstTunion;
+
 typedef struct {
     char* abi_ptr;
     usize abi_len;
@@ -391,6 +427,8 @@ typedef struct AstNode {
         AstFunction function_decl;
         AstStruct struct_decl;
         AstEnum enum_decl;
+        AstTunion tunion_decl;
+        AstUnion union_decl;
 
         AstBlock block;
 

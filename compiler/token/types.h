@@ -10,10 +10,15 @@
     X(T_Module)     \
     X(T_Import)     \
                     \
+    X(T_Test)       \
+                    \
     X(T_Extern)     \
                     \
     X(T_Struct)     \
     X(T_Enum)       \
+                    \
+    X(T_Tunion)     \
+    X(T_Union)      \
                     \
     X(T_Self)       \
                     \
@@ -58,6 +63,8 @@
                     \
     X(T_Dot)        \
     X(T_DotDot)     \
+                    \
+    X(T_Arrow)      \
                     \
     X(T_Comma)      \
                     \

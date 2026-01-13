@@ -239,6 +239,25 @@ char* lex_word(char* cursor) {
                 break;
             }
 
+            if (matches("test", start, length)) {
+                token -> kind = T_Test;
+                break;
+            }
+
+            if (matches("tunion", start, length)) {
+                token -> kind = T_Tunion;
+                break;
+            }
+
+            token -> kind = T_Ident;
+        } break;
+
+        case 'u': {
+            if (matches("union", start, length)) {
+                token -> kind = T_Union;
+                break;
+            }
+
             token -> kind = T_Ident;
         } break;
 
@@ -311,6 +330,12 @@ char* lex_op(char* cursor, u32 index) {
         case '-': {
             if (*cursor == '=') {
                 token -> kind = T_MinusEq;
+                cursor++;
+                break;
+            }
+
+            if (*cursor == '>') {
+                token -> kind = T_Arrow;
                 cursor++;
                 break;
             }
