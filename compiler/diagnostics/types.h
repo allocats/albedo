@@ -6,6 +6,11 @@
 
 #define DIAG_SUPPRESS_THRESHOLD 32
 
+#define LOC_START_OF_TOK  (1 << 0)
+#define LOC_END_OF_TOK    (1 << 1)
+#define LOC_WHOLE_TOK     (1 << 2)
+#define LOC_WHOLE_LINE    (1 << 3)
+
 typedef enum {
     DIAG_ERR,
     DIAG_WARN,

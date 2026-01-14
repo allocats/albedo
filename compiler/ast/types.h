@@ -8,6 +8,8 @@
 typedef struct AstNode AstNode;
 
 #define X_AST(X)        \
+    X(A_ParseError)     \
+                        \
     X(A_Module)         \
     X(A_Import)         \
                         \
@@ -18,6 +20,9 @@ typedef struct AstNode AstNode;
     X(A_Function)       \
     X(A_Struct)         \
     X(A_Enum)           \
+                        \
+    X(A_Tunion)         \
+    X(A_Union)          \
                         \
     X(A_Block)          \
     X(A_Defer)          \
@@ -81,15 +86,38 @@ typedef struct {
 } AstModule;
 
 typedef enum {
-    IMPORT_LIB,
-    IMPORT_REL
+    ImportLib,
+    ImportRel 
 } ImportKind;
 
 typedef struct {
-    char* path_ptr;
-    usize path_len;
+    char* ptr;
+    usize len;
+} AstSegment;
+
+typedef struct {
     ImportKind kind;
+
+    union {
+        struct {
+            char* ptr;
+            usize len;
+        } relative;
+
+        struct {
+            AstSegment* segments;
+            u8 segment_count;
+            u8 segment_capacity;
+        } lib;
+    };
 } AstImport;
+
+typedef struct {
+    char* name_ptr;
+    usize name_len;
+
+    AstNode* block;
+} AstTest;
 
 typedef struct {
     char* name_ptr;
@@ -111,11 +139,23 @@ typedef struct {
     AstNode* body;
 } AstFunction;
 
+typedef enum {
+    FieldBasic,
+    FieldStruct,
+    FieldUnion,
+} FieldKind;
+
 typedef struct {
     char* name_ptr;
     usize name_len;
 
-    AstSpan type;
+    FieldKind kind;
+
+    union {
+        AstSpan  basic_type;
+        AstNode* struct_decl;
+        AstNode* union_decl;
+    };
 
     // Optional, null to indicate no expression 
     AstNode* default_value;
@@ -126,12 +166,8 @@ typedef struct {
     usize name_len;
 
     AstField* fields;
-    u16 field_conut;
+    u16 field_count;
     u16 field_capacity;
-
-    AstNode** methods;
-    u16 method_count;
-    u16 method_capacity;
 } AstStruct;
 
 typedef struct {
@@ -174,6 +210,7 @@ typedef enum {
     VariantUnit,
     VariantTuple,
     VariantStruct,
+    VariantUnion,
 } VariantKind;
 
 typedef struct {
@@ -403,11 +440,14 @@ typedef struct {
 
 typedef struct AstNode {
     AstKind kind;
-    ByteSpan span;
+    // u32 line;
+    // ByteSpan span;
 
     union {
         AstImport import_decl;
         AstModule module_decl;
+
+        AstTest test_decl;
 
         AstExternFn extern_fn;
         AstExternStruct extern_struct;

@@ -1,6 +1,6 @@
 #include "lexer.h"
 
-#include "../albedo/albedo.h"
+#include "../albedo/types.h"
 #include "../diagnostics/diagnostics.h"
 #include "../token/token.h"
 #include "types.h"

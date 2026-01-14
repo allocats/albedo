@@ -3,6 +3,7 @@
 
 #include "albedo/albedo.h"
 #include "albedo/types.h"
+#include "ast_parser/parser.h"
 #include "arena/arena.h"
 #include "buffers/buffers.h"
 #include "diagnostics/diagnostics.h"
@@ -47,14 +48,18 @@ i32 main(i32 argc, char* argv[]) {
 
     lex_from_files();
 
+    parse_tokens();
+
     print_tokens(albedo_ctx.tokens);
 
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();
+        printf("failed");
         buffer_cleanup();
         return 1;
     }
 
+    printf("success");
     buffer_cleanup();
 
     return 0;

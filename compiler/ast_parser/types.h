@@ -6,6 +6,12 @@
 #include "../utils/types.h"
 
 typedef struct {
+    usize file_index;
+    usize cursor; 
+    usize count;
+} Parser;
+
+typedef struct {
     AstNode** nodes;
     usize count;
     usize capacity;

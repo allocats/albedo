@@ -1,4 +1,4 @@
-import <std/mem>;
+import std::mem;
 
 const GROWTH_FACTOR: f32 = 1.5;
 const DEFAULT_CAPACITY: usize = 32;

@@ -20,6 +20,10 @@ void extend_diagnostics(void) {
     }
 }
 
+/*
+*   Init compiler diagnostics
+*/
+
 void err_file_not_found(const char* path) {
     fprintf(
         stderr,
@@ -61,6 +65,10 @@ void err_cant_map_file(const char* path) {
 
     albedo_ctx.error_count++;
 }
+
+/*
+*   Lexer diagnostics
+*/
 
 void err_unknown_token(Token* token, u32 index) {
     extend_diagnostics();
@@ -171,6 +179,54 @@ void err_invalid_escape_sequence(char* start, usize length, char* help, u32 inde
 
     albedo_ctx.error_count++;
 }
+
+/*
+*   AST Diagnostics
+*/
+
+void err_ast_add(char* msg, char* help, Token* token, u32 loc, u32 index) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+    diag -> msg = msg;
+    diag -> help = help;
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < token -> lexeme) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+
+    if (loc & LOC_START_OF_TOK) {
+        diag -> len = 1;
+    } else if (loc & LOC_END_OF_TOK) {
+        diag -> len = 1;
+        diag -> col += token -> length;
+    } else if (loc & LOC_WHOLE_TOK) {
+        diag -> len = token -> length;
+    }
+
+    albedo_ctx.error_count++;
+}
+
+/*
+*   Diagnostics control
+*/
 
 const char* match_level_colour(DiagKind kind) {
     switch (kind) {
