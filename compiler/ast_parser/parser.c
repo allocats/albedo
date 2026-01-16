@@ -64,7 +64,7 @@ inline Token* parser_peek(Parser* p) {
 }
 
 inline Token* parser_peek_prev(Parser* p) {
-    assert(p -> cursor > 0 && p -> cursor < p -> count && "Array out of bounds");
+    assert(p -> cursor > 0 && p -> cursor <= p -> count && "Array out of bounds");
     return &albedo_ctx.tokens.items[p -> cursor - 1];
 }
 

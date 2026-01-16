@@ -20,6 +20,10 @@
 #define MATCH_DEFAULT_CAP   8
 #define BLOCK_DEFAULT_CAP   8
 
+
+/*
+*   Node making function helpers
+*/
 AstNode* ast_make_fn_node(bool is_extern);
 AstNode* ast_make_struct_node(bool is_extern);
 AstNode* ast_make_enum_node(void);
@@ -30,7 +34,17 @@ AstNode* ast_make_block_node(void);
 AstNode* ast_make_fn_call_node(void);
 AstNode* ast_make_struct_init_node(void);
 
+/*
+*   Initializers
+*/
 void ast_init_lib_import(AstNode* node);
+void ast_init_module_decl(AstNode* node);
+
+/*
+*   Dynamic array helpers
+*/
 void ast_import_lib_push(AstNode* node, Token* token);
+void ast_module_segment_push(AstNode* node, Token* token);
+void ast_fn_param_push(AstNode* node, AstParam param);
 
 #endif // !AST_H

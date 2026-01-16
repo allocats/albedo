@@ -98,6 +98,7 @@ void err_unknown_token(Token* token, u32 index) {
     diag -> line = line;
     diag -> col = col;
     diag -> len = token -> length;
+    diag -> index = index;
 
     albedo_ctx.error_count++;
 }
@@ -144,6 +145,7 @@ void err_unterminated_delimiter(Token* token, u32 index, DelimType type) {
     diag -> line = line;
     diag -> col = col;
     diag -> len = type == DELIM_COMMENT ? 2 : 1;
+    diag -> index = index;
 
     albedo_ctx.error_count++;
 }
@@ -156,6 +158,7 @@ void err_invalid_escape_sequence(char* start, usize length, char* help, u32 inde
     diag -> kind = DIAG_ERR;
     diag -> msg = "invalid escape sequence";
     diag -> help = help;
+    diag -> index = index;
 
     u32 line = 1;
     u32 col = 1;
@@ -180,6 +183,167 @@ void err_invalid_escape_sequence(char* start, usize length, char* help, u32 inde
     albedo_ctx.error_count++;
 }
 
+void err_delim_stack_unclosed(Token* token, u32 index) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+    diag -> msg = "unclosed delimiter";
+    diag -> index = index;
+
+    switch (token -> kind) {
+        case T_Lt: {
+            diag -> help = "add a closing '>'";
+        } break;
+
+        case T_LParen: {
+            diag -> help = "add a closing ')'";
+        } break;
+
+        case T_LBrace: {
+            diag -> help = "add a closing '}'";
+        } break;
+
+        case T_LBracket: {
+            diag -> help = "add a closing ']'";
+        } break;
+
+        default: {
+            diag -> help = "add closing delimiter";
+        } break;
+    }
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < token -> lexeme) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+    diag -> len = token -> length;
+
+    albedo_ctx.error_count++;
+}
+
+void err_delim_stack_max(Token* token, u32 index) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+    diag -> msg = "what are you doing... delimiter stack is at max, how are you nesting this much";
+    diag -> index = index;
+    diag -> help = "stop what you are doing and go seek medical help";
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < token -> lexeme) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+    diag -> len = token -> length;
+
+    albedo_ctx.error_count++;
+}
+
+void err_delim_unopened(Token* token, u32 index) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+    diag -> msg = "unopened delimiter";
+    diag -> index = index;
+
+    if (token -> kind == T_RParen) {
+        diag -> help = "missing '('";
+    } else if (token -> kind == T_RBrace) {
+        diag -> help = "missing '{'";
+    } else if (token -> kind == T_RBracket) {
+        diag -> help = "missing '['";
+    }
+
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < token -> lexeme) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+    diag -> len = token -> length;
+
+    albedo_ctx.error_count++;
+}
+
+void err_delim_mismatch(Token* token, u32 index) {
+    extend_diagnostics();
+
+    Diagnostic* diag = &diag_ctx.diags[diag_ctx.diag_count++];
+
+    diag -> kind = DIAG_ERR;
+    diag -> msg = "mismatched delimiters";
+    diag -> index = index;
+    diag -> help = nullptr;
+
+    u32 line = 1;
+    u32 col = 1;
+
+    const char* cursor = albedo_ctx.files[index].buffer;
+
+    while (cursor < token -> lexeme) {
+        if (*cursor == '\n') {
+            line++;
+            col = 1;
+        } else {
+            col++;
+        }
+
+        cursor++;
+    }
+
+    diag -> line = line;
+    diag -> col = col;
+    diag -> len = token -> length;
+
+    albedo_ctx.error_count++;
+}
+
 /*
 *   AST Diagnostics
 */
@@ -192,6 +356,7 @@ void err_ast_add(char* msg, char* help, Token* token, u32 loc, u32 index) {
     diag -> kind = DIAG_ERR;
     diag -> msg = msg;
     diag -> help = help;
+    diag -> index = index;
 
     u32 line = 1;
     u32 col = 1;

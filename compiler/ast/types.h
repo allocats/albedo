@@ -45,7 +45,6 @@ typedef struct AstNode AstNode;
     X(A_Unary)          \
     X(A_Assign)         \
     X(A_Call)           \
-    X(A_MethodCall)     \
     X(A_Ident)          \
     X(A_Literal)        \
     X(A_Index)          \
@@ -81,20 +80,26 @@ typedef struct {
 } ByteSpan;
 
 typedef struct {
-    char* path_ptr;
-    usize path_len;
+    char* ptr;
+    usize len;
+} AstSegment;
+
+typedef struct {
+    AstSegment* segments;
+    u32 segment_count;
+    u32 segment_capacity;
 } AstModule;
 
+// lib kind will check the user's libs directory for the module 
+// rel is a relative file to the current file
 typedef enum {
     ImportLib,
     ImportRel 
 } ImportKind;
 
-typedef struct {
-    char* ptr;
-    usize len;
-} AstSegment;
-
+// if the import is a T_StrLit then it is relative
+// else if it is segments (e.g: std::io) then it 
+// is a library import
 typedef struct {
     ImportKind kind;
 
@@ -106,8 +111,8 @@ typedef struct {
 
         struct {
             AstSegment* segments;
-            u8 segment_count;
-            u8 segment_capacity;
+            u32 segment_count;
+            u32 segment_capacity;
         } lib;
     };
 } AstImport;
@@ -122,6 +127,11 @@ typedef struct {
 typedef struct {
     char* name_ptr;
     usize name_len;
+} AstGenericParam;
+
+typedef struct {
+    char* name_ptr;
+    usize name_len;
 
     AstSpan type;
 } AstParam;
@@ -130,9 +140,13 @@ typedef struct {
     char* name_ptr;
     usize name_len;
 
+    AstGenericParam* generics;
+    u32 generic_count;
+    u32 generic_capacity;
+
     AstParam* params;
-    u16 param_count;
-    u16 param_capacity;
+    u32 param_count;
+    u32 param_capacity;
 
     AstSpan return_type;
 
@@ -165,9 +179,13 @@ typedef struct {
     char* name_ptr;
     usize name_len;
 
+    AstGenericParam* generics;
+    u32 generic_count;
+    u32 generic_capacity;
+
     AstField* fields;
-    u16 field_count;
-    u16 field_capacity;
+    u32 field_count;
+    u32 field_capacity;
 } AstStruct;
 
 typedef struct {
@@ -177,7 +195,7 @@ typedef struct {
     // Optional value
     // Example
     //
-    // enum Fruit: u8 {
+    // enum Fruit: u32 {
     //     Apple = 1;
     // }
     AstNode* value;
@@ -222,14 +240,14 @@ typedef struct {
     union {
         struct {
             AstSpan* types;
-            u8 type_count;
-            u8 type_capacity;
+            u32 type_count;
+            u32 type_capacity;
         } tuple;
 
         struct {
             AstField* fields;
-            u8 field_count;
-            u8 field_capacity;
+            u32 field_count;
+            u32 field_capacity;
         } struct_fields;
     };
 } AstTunionVariant;
@@ -251,8 +269,8 @@ typedef struct {
     usize name_len;
 
     AstParam* params;
-    u8 param_count;
-    u8 param_capacity;
+    u32 param_count;
+    u32 param_capacity;
 
     AstSpan return_type;
 
@@ -267,8 +285,8 @@ typedef struct {
     usize name_len;
 
     AstField* fields;
-    u16 field_count;
-    u16 field_capacity;
+    u32 field_count;
+    u32 field_capacity;
 } AstExternStruct;
 
 typedef struct {
@@ -278,6 +296,76 @@ typedef struct {
     char* name_ptr;
     usize name_len;
 } AstExternType;
+
+typedef struct {
+    TokenKind op;
+    AstNode* left;
+    AstNode* right;
+} AstBinary;
+
+typedef struct {
+    TokenKind op;
+    AstNode* operand;
+} AstUnary;
+
+typedef struct {
+    AstNode* target;
+    AstNode* value;
+    TokenKind op;
+} AstAssign;
+
+typedef struct {
+    char* ptr;
+    usize len;
+} AstIdent;
+
+typedef struct {
+    TokenKind kind;
+
+    char* ptr;
+    usize len;
+} AstLiteral;
+
+typedef struct {
+    AstNode* ident;
+
+    AstNode** args;
+    u32 arg_count;
+    u32 arg_capacity;
+} AstFnCall;
+
+typedef struct {
+    // This should point to an ident
+    AstNode* target;
+
+    char* field_ptr;
+    usize field_len;
+} AstMemberAccess;
+
+typedef struct {
+    AstNode* ident;
+    AstNode* index;
+} AstIndex;
+
+typedef struct {
+    AstNode* expr;
+    AstSpan target_type;
+} AstCast;
+
+typedef struct {
+    char* ptr;
+    usize len;
+
+    AstNode* value;
+} AstFieldInit;
+
+typedef struct {
+    AstNode* ident;
+
+    AstFieldInit* field_inits;
+    u32 field_count;
+    u32 field_capacity;
+} AstStructInit;
 
 typedef struct {
     char* name_ptr;
@@ -326,13 +414,16 @@ typedef struct {
 
 typedef struct {
     AstNode* condition;
-
     AstNode* block;
+} AstIfBranch;
 
-    // If pointing to block node then just "else", but if 
-    // pointing to another AstIf node then it's "else if".
+typedef struct {
+    AstIfBranch* branches;
+    u32 branch_count;
+    u32 branch_capacity;
+
     // Null if no else statement
-    AstNode* else_stmt;
+    AstNode* else_block;
 } AstIf;
 
 typedef struct {
@@ -353,9 +444,20 @@ typedef struct {
     AstNode* block;
 } AstFor;
 
+typedef enum {
+    PatternIdent,
+    PatternLit,
+    PatternWildcard
+} PatternKind;
+
 typedef struct {
-    char* pattern_ptr;
-    usize pattern_len;
+    PatternKind kind;
+    ByteSpan span;
+
+    union {
+        AstIdent ident;
+        AstLiteral lit;
+    };
 
     AstNode* block;
 } AstMatchArm;
@@ -364,8 +466,8 @@ typedef struct {
     AstNode* target;
 
     AstMatchArm* arms;
-    u16 arm_count;
-    u16 arm_capacity;
+    u32 arm_count;
+    u32 arm_capacity;
 
     AstNode* default_block;
 } AstMatch;
@@ -376,72 +478,9 @@ typedef struct {
     usize stmt_capacity;
 } AstBlock;
 
-typedef struct {
-    TokenKind op;
-    AstNode* left;
-    AstNode* right;
-} AstBinary;
-
-typedef struct {
-    TokenKind op;
-    AstNode* operand;
-} AstUnary;
-
-typedef struct {
-    AstNode* target;
-    AstNode* value;
-    TokenKind op;
-} AstAssign;
-
-typedef struct {
-    char* ptr;
-    usize len;
-} AstIdent;
-
-typedef struct {
-    TokenKind kind;
-
-    char* ptr;
-    usize len;
-} AstLiteral;
-
-typedef struct {
-    AstNode* ident;
-
-    AstNode** args;
-    u8 arg_count;
-    u8 arg_capacity;
-} AstFnCall;
-
-typedef struct {
-    // This should point to an ident
-    AstNode* target;
-
-    char* field_ptr;
-    usize field_len;
-} AstMemberAccess;
-
-typedef struct {
-    AstNode* ident;
-    AstNode* index;
-} AstIndex;
-
-typedef struct {
-    AstNode* expr;
-    AstSpan target_type;
-} AstCast;
-
-typedef struct {
-    AstNode* ident;
-    AstNode** field_inits;
-    u16 field_count;
-    u16 field_capacity;
-} AstStructInit;
-
 typedef struct AstNode {
     AstKind kind;
-    // u32 line;
-    // ByteSpan span;
+    ByteSpan span;
 
     union {
         AstImport import_decl;

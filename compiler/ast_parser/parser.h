@@ -10,9 +10,20 @@ void extend_parse_tree(ArenaAllocator* arenea, ParseTree* tree);
 
 void parse_tokens(void); 
 
+/*
+*   Parse nodes
+*/
 AstNode* parse_module_decl(Parser* p);
 AstNode* parse_import_decl(Parser* p);
 
+/*
+*   Recovery
+*/
+void recover_top_level_decl(Parser* p);
+AstNode* top_level_decl_parse_fail(Parser* p, AstNode* node);
+/*
+*   Parser movement and token consumption
+*/
 Token* parser_peek(Parser* p);
 Token* parser_advance(Parser* p);
 Token* parser_peek_prev(Parser* p);

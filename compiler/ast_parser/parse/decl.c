@@ -18,22 +18,52 @@ AstNode* parse_module_decl(Parser* p) {
             LOC_WHOLE_TOK,
             p -> file_index
         );
+
+        return top_level_decl_parse_fail(p, node);
     }
 
-    Token* token = parser_advance(p);
-
     node -> kind = A_Module;
-    node -> module_decl.path_ptr = token -> lexeme;
-    node -> module_decl.path_len = token -> length;
 
-    if (!parser_check(p, T_Semi)) {
-        err_ast_add(
-            "expected ';'",
-            "add a ';' here",
-            parser_peek_prev(p),
-            LOC_END_OF_TOK,
-            p -> file_index
-        );
+    ast_init_module_decl(node);
+
+    while (p -> cursor < p -> count) {
+        Token* segment = parser_peek(p);
+
+        if (segment -> kind != T_Ident) {
+            err_ast_add(
+                "expected identifier",
+                "add an identifier here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
+        }
+
+        ast_module_segment_push(node, segment);
+
+        parser_advance(p);
+        
+        Token* token = parser_peek(p);
+
+        if (token -> kind == T_Semi) {
+            break;
+        }
+
+        if (token -> kind != T_ColonColon) {
+            err_ast_add(
+                "expected '::' or ';' after segment",
+                "add '::' or ';' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
+        }
+
+        parser_advance(p);
     }
 
     parser_advance(p);
@@ -64,6 +94,8 @@ AstNode* parse_import_decl(Parser* p) {
             LOC_WHOLE_TOK,
             p -> file_index
         );
+
+        return top_level_decl_parse_fail(p, node);
     }
 
     node -> import_decl.kind = ImportLib;
@@ -71,50 +103,94 @@ AstNode* parse_import_decl(Parser* p) {
     ast_init_lib_import(node);
 
     while (p -> cursor < p -> count) {
-        Token* module = parser_advance(p);
+        Token* segment = parser_peek(p);
 
-        if (module -> kind != T_Ident) {
+        if (segment -> kind != T_Ident) {
             err_ast_add(
                 "expected identifier",
                 "add an identifier here",
-                parser_peek(p),
-                LOC_WHOLE_TOK,
-                p -> file_index
-            );
-            break;
-        }
-
-        ast_import_lib_push(node, module);
-
-        if (parser_check(p, T_Eof)) {
-            err_ast_add(
-                "expected ';'",
-                "add a ';' here",
                 parser_peek_prev(p),
                 LOC_END_OF_TOK,
                 p -> file_index
             );
 
-            return node;
+            return top_level_decl_parse_fail(p, node);
         }
 
-        if (parser_check(p, T_Semi)) {
+        ast_import_lib_push(node, segment);
+
+        parser_advance(p);
+        
+        Token* token = parser_peek(p);
+
+        if (token -> kind == T_Semi) {
             break;
         }
 
-        if (!parser_check(p, T_ColonColon)) {
+        if (token -> kind != T_ColonColon) {
             err_ast_add(
-                "expected '::' between segments",
-                "add a '::' here",
+                "expected '::' or ';' after segment",
+                "add '::' or ';' here",
                 parser_peek_prev(p),
                 LOC_END_OF_TOK,
                 p -> file_index
             );
-            break;
+
+            return top_level_decl_parse_fail(p, node);
         }
+
+        parser_advance(p);
     }
 
     parser_advance(p);
+
+    return node;
+}
+
+AstNode* parse_fn_decl(Parser* p) {
+    AstNode* node = ast_make_fn_node(false);
+
+    Token* name = parser_peek(p);
+
+    if (name -> kind != T_Ident) {
+        err_ast_add(
+            "expected identifier for function name",
+            "add an identifier here",
+            name,
+            LOC_WHOLE_TOK,
+            p -> file_index
+        );
+
+        return top_level_decl_parse_fail(p, node);
+    }
+
+    node -> function_decl.name_ptr = name -> lexeme;
+    node -> function_decl.name_len = name -> length;
+
+    parser_advance(p);
+
+    if (!parser_check(p, T_LParen)) {
+        err_ast_add(
+            "expected '('",
+            "add a '(' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        return top_level_decl_parse_fail(p, node);
+    }
+
+    parser_advance(p);
+
+    while (p -> cursor < p -> count) {
+        if (parser_check(p, T_RParen)) {
+            break;
+        }
+
+        if (parser_check(p, T_LBrace)) {
+        }
+    }
 
     return node;
 }

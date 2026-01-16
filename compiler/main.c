@@ -50,7 +50,9 @@ i32 main(i32 argc, char* argv[]) {
 
     parse_tokens();
 
+    #ifdef DEBUG_MODE
     print_tokens(albedo_ctx.tokens);
+    #endif /* ifdef DEBUG_MODE */
 
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();

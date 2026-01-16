@@ -3,6 +3,8 @@
 #include "../albedo/types.h"
 #include "../diagnostics/diagnostics.h"
 #include "../token/token.h"
+#include "delimiters/delims.h"
+#include "delimiters/types.h"
 #include "types.h"
 
 #include <string.h>
@@ -24,7 +26,7 @@ extern AlbedoCtx albedo_ctx;
 
 char* lex_word(char* cursor);
 char* lex_number(char* cursor);
-char* lex_delim(char* cursor);
+char* lex_delim(char* cursor, DelimStack* stack, u32 index);
 char* lex_op(char* cursor, u32 index);
 char* lex_literal(char* cursor, u32 index);
 char* lex_invalid(char* cursor, u32 index);
@@ -38,6 +40,11 @@ void lex_from_files(void) {
         char* cursor = file.buffer;
         char* end = file.buffer + file.size;
 
+        DelimStack stack = {
+            .top = -1,
+            .delims = {0}
+        };
+
         while (cursor < end) {
             SKIP_WHITESPACE(cursor);
 
@@ -46,7 +53,7 @@ void lex_from_files(void) {
             if (IS_ALPHA(c)) {
                 cursor = lex_word(cursor);
             } else if (IS_DELIMITER(c)) {
-                cursor = lex_delim(cursor);
+                cursor = lex_delim(cursor, &stack, i);
             } else if (IS_DIGIT(c)) {
                 cursor = lex_number(cursor);
             } else if (IS_OPERATOR(c)) {
@@ -55,6 +62,15 @@ void lex_from_files(void) {
                 cursor = lex_literal(cursor, i);
             } else {
                 cursor = lex_invalid(cursor, i);
+            }
+        }
+
+        if (stack.top != -1) {
+            isize count = stack.top;
+
+            for (isize n = 0; n < count + 1; n++) {
+                Token* token = stack.delims[n];
+                err_delim_stack_unclosed(token, i);
             }
         }
     }
@@ -534,7 +550,7 @@ char* lex_op(char* cursor, u32 index) {
     return cursor;
 }
 
-char* lex_delim(char* cursor) {
+char* lex_delim(char* cursor, DelimStack* stack, u32 index) {
     extend_tokens(albedo_ctx.arena, &albedo_ctx.tokens);
 
     Tokens* tokens = &albedo_ctx.tokens;
@@ -570,26 +586,32 @@ char* lex_delim(char* cursor) {
 
         case '(': {
             token -> kind = T_LParen;
+            delim_stack_push(stack, token, index);
         } break;
 
         case ')': {
             token -> kind = T_RParen;
+            match_delim(stack, token, index);
         } break;
 
         case '[': {
             token -> kind = T_LBracket;
+            delim_stack_push(stack, token, index);
         } break;
 
         case ']': {
             token -> kind = T_RBracket;
+            match_delim(stack, token, index);
         } break;
 
         case '{': {
             token -> kind = T_LBrace;
+            delim_stack_push(stack, token, index);
         } break;
 
         case '}': {
             token -> kind = T_RBrace;
+            match_delim(stack, token, index);
         } break;
 
         case '\0': {

@@ -17,6 +17,11 @@ void err_unknown_token(Token* token, u32 index);
 void err_unterminated_delimiter(Token* token, u32 index, DelimType type);
 void err_invalid_escape_sequence(char* start, usize length, char* help, u32 index);
 
+void err_delim_stack_unclosed(Token* token, u32 index);
+void err_delim_stack_max(Token* token, u32 index);
+void err_delim_unopened(Token* token, u32 index);
+void err_delim_mismatch(Token* token, u32 index); 
+
 void err_ast_add(char* msg, char* help, Token* token, u32 loc, u32 index);
 
 void diagnostics_print(void);
