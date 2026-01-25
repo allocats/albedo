@@ -147,8 +147,145 @@ AstNode* parse_import_decl(Parser* p) {
     return node;
 }
 
+bool parse_generic_params(Parser* p, AstNode* node) {
+    while (p -> cursor < p -> count) {
+        Token* param = parser_peek(p);
+
+        if (param -> kind != T_Ident) {
+            err_ast_add(
+                "expected identifier",
+                "add a valid identifier here",
+                parser_peek(p),
+                LOC_WHOLE_TOK,
+                p -> file_index
+            );
+            // recover
+            return false;
+        }
+
+        ast_fn_generic_push(node, param);
+
+        parser_advance(p);
+
+        if (parser_check(p, T_Gt)) {
+            parser_advance(p);
+            return true;
+        }
+
+        if (parser_check(p, T_Comma)) {
+            parser_advance(p);
+        } else {
+            err_ast_add(
+                "expected ',' or '>'",
+                "add a ',' between generics or '>' to end generics declaration",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+            // recover
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool parse_params(Parser* p, AstNode* node) {
+    if (parser_check(p, T_RParen)) {
+        parser_advance(p);
+        return true;
+    }
+
+    bool result = true;
+
+    while (p -> cursor < p -> count) {
+        Token* tok = parser_peek(p);
+        
+        if (tok -> kind == T_Comma) {
+            parser_advance(p);
+        } else if (tok -> kind == T_RParen) {
+            parser_advance(p);
+            break;
+        } else if (tok -> kind == T_Eof || tok -> kind == T_LBrace) {
+            break;
+        }
+
+        Token* param_name = parser_peek(p);
+
+        if (param_name -> kind != T_Ident) {
+            err_ast_add(
+                "expected parameter name",
+                "add a valid identifier here",
+                parser_peek(p),
+                LOC_WHOLE_TOK,
+                p -> file_index
+            );
+            recover_fn_param_decl(p);
+            result = false;
+            continue;
+        }
+
+        parser_advance(p);
+
+        if (!parser_check(p, T_Colon)) {
+            err_ast_add(
+                "expected ':' between parameter and type",
+                "add a ':' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+            recover_fn_param_decl(p);
+            result = false;
+            continue;
+        }
+        
+        parser_advance(p);
+
+        AstSpan type_span = parse_type_span(p);
+
+        AstParam param = (AstParam) {
+            .name_ptr = param_name -> lexeme,
+            .name_len = param_name -> length,
+            .type = type_span
+        };
+
+        ast_fn_param_push(node, param);
+
+        if (parser_check(p, T_RParen)) {
+            parser_advance(p);
+            return result;
+        } 
+
+        if (parser_check(p, T_Comma)) {
+            parser_advance(p);
+            continue;
+        }
+
+        err_ast_add(
+            "expected ',' or ')' after parameter",
+            "add a ',' or ')' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+        recover_fn_param_decl(p);
+        result = false;
+    }
+
+    return result;
+}
+
 AstNode* parse_fn_decl(Parser* p) {
     AstNode* node = ast_make_fn_node(false);
+
+    if (parser_check(p, T_Lt)) {
+        parser_advance(p);
+
+        if (!parse_generic_params(p, node)) {
+            return top_level_decl_parse_fail(p, node);
+        }
+    }
 
     Token* name = parser_peek(p);
 
@@ -183,14 +320,28 @@ AstNode* parse_fn_decl(Parser* p) {
 
     parser_advance(p);
 
-    while (p -> cursor < p -> count) {
-        if (parser_check(p, T_RParen)) {
-            break;
-        }
+    parse_params(p, node);
 
-        if (parser_check(p, T_LBrace)) {
-        }
+    if (parser_check(p, T_Colon)) {
+        parser_advance(p);
+        node -> function_decl.return_type = parse_type_span(p);
     }
+
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        return top_level_decl_parse_fail(p, node);
+    }
+
+    node -> function_decl.body = parse_block(p);
+
+    parser_advance(p);
 
     return node;
 }

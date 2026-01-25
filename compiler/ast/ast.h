@@ -31,8 +31,18 @@ AstNode* ast_make_union_node(void);
 AstNode* ast_make_tunion_node(void);
 AstNode* ast_make_match_node(void);
 AstNode* ast_make_block_node(void);
-AstNode* ast_make_fn_call_node(void);
+AstNode* ast_make_fn_call_node(AstNode* ident);
 AstNode* ast_make_struct_init_node(void);
+
+AstNode* ast_make_index_node(AstNode* ident, AstNode* index);
+AstNode* ast_make_member_access_node(AstNode* ident, Token* field);
+
+AstNode* ast_make_literal_node(Token* token);
+AstNode* ast_make_ident_node(Token* token);
+AstNode* ast_make_assign_node(AstNode* target, AstNode* value, TokenKind op);
+AstNode* ast_make_binop_node(AstNode* left, AstNode* right, TokenKind op); 
+AstNode* ast_make_cast_node(AstNode* expr, AstSpan type); 
+AstNode* ast_make_unary_node(AstNode* operand, TokenKind op); 
 
 /*
 *   Initializers
@@ -46,5 +56,16 @@ void ast_init_module_decl(AstNode* node);
 void ast_import_lib_push(AstNode* node, Token* token);
 void ast_module_segment_push(AstNode* node, Token* token);
 void ast_fn_param_push(AstNode* node, AstParam param);
+void ast_fn_generic_push(AstNode* node, Token* token);
+void ast_fn_call_arg_push(AstNode* node, AstNode* arg);
+
+void ast_block_stmt_push(AstNode* node, AstNode* stmt);
+
+/*
+*   Debugging
+*/
+#include "../ast_parser/types.h"
+
+void print_ast(ParseTree* tree);
 
 #endif // !AST_H

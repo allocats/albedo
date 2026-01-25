@@ -376,6 +376,7 @@ void err_ast_add(char* msg, char* help, Token* token, u32 loc, u32 index) {
 
     diag -> line = line;
     diag -> col = col;
+    diag -> len = token -> length;
 
     if (loc & LOC_START_OF_TOK) {
         diag -> len = 1;

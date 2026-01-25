@@ -11,16 +11,37 @@ void extend_parse_tree(ArenaAllocator* arenea, ParseTree* tree);
 void parse_tokens(void); 
 
 /*
-*   Parse nodes
+*   Parsing 
 */
+
+// precedence
+Precedence get_precedence(TokenKind kind);
+bool is_right_associative(Precedence prec);
+bool is_unary_operator(TokenKind kind);
+
+// spans
+AstSpan parse_type_span(Parser* p); 
+
+// declarations
 AstNode* parse_module_decl(Parser* p);
 AstNode* parse_import_decl(Parser* p);
+AstNode* parse_fn_decl(Parser* p);
+
+// statements
+AstNode* parse_block(Parser* p) ;
+AstNode* parse_var_decl(Parser* p);
+
+// expressions
+AstNode* parse_expression(Parser* p);
 
 /*
 *   Recovery
 */
 void recover_top_level_decl(Parser* p);
+void recover_fn_param_decl(Parser* p);
+
 AstNode* top_level_decl_parse_fail(Parser* p, AstNode* node);
+
 /*
 *   Parser movement and token consumption
 */

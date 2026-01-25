@@ -7,6 +7,7 @@
 
 #define TOKENS_GROWTH_FACTOR 2 
 
+void print_token(Token* token);
 void print_tokens(Tokens tokens);
 void extend_tokens(ArenaAllocator* arena, Tokens* tokens);
 

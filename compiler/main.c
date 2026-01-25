@@ -3,6 +3,7 @@
 
 #include "albedo/albedo.h"
 #include "albedo/types.h"
+#include "ast/ast.h"
 #include "ast_parser/parser.h"
 #include "arena/arena.h"
 #include "buffers/buffers.h"
@@ -52,6 +53,7 @@ i32 main(i32 argc, char* argv[]) {
 
     #ifdef DEBUG_MODE
     print_tokens(albedo_ctx.tokens);
+    print_ast(&albedo_ctx.ast);
     #endif /* ifdef DEBUG_MODE */
 
     if (albedo_ctx.error_count > 0) {

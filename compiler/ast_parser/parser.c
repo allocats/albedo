@@ -30,6 +30,10 @@ void parse_tokens(void) {
                 node = parse_import_decl(&parser);
             } break;
 
+            case T_Fn: {
+                node = parse_fn_decl(&parser);
+            } break;
+
             case T_Ident: {
                 // emit error: not a top level decl 
                 // levenshtein distance for suggestion

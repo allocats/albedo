@@ -231,10 +231,10 @@ char* lex_word(char* cursor) {
         } break;
 
         case 's': {
-            if (matches("self", start, length)) {
-                token -> kind = T_Self;
-                break;
-            }
+            // if (matches("self", start, length)) {
+            //     token -> kind = T_Self;
+            //     break;
+            // }
 
             if (matches("struct", start, length)) {
                 token -> kind = T_Struct;
@@ -333,6 +333,16 @@ char* lex_op(char* cursor, u32 index) {
     char* start = cursor++;
 
     switch (*start) {
+        case '=': {
+            if (*cursor == '=') {
+                token -> kind = T_EqEq;
+                cursor++;
+                break;
+            }
+
+            token -> kind = T_Eq;
+        } break;
+
         case '+': {
             if (*cursor == '=') {
                 token -> kind = T_PlusEq;

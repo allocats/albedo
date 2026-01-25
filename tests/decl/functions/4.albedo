@@ -1,0 +1,3 @@
+fn<T foo(bar: T): bool {
+
+}

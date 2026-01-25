@@ -392,7 +392,7 @@ typedef struct {
     char* name_ptr;
     usize name_len;
 
-    // Optional can be inferred
+    // Not optional can NOT be inferred
     AstSpan type;
 
     // Optional
@@ -515,6 +515,7 @@ typedef struct AstNode {
         AstContinue continue_stmt;
         AstReturn return_stmt;
 
+        AstAssign assign;
         AstBinary binary_op;
         AstUnary unary_op;
         AstIdent ident;

@@ -1,5 +1,5 @@
 CC = clang
-CF = -Wall -Wextra -march=native
+CF = -Wall -Wextra -march=native -O2 -flto
 DF = -g3 -DDEBUG_MODE
 
 SRC_DIR = compiler

@@ -41,6 +41,8 @@ AstNode* ast_make_fn_node(bool is_extern) {
         node -> function_decl.param_capacity = PARAM_DEFAULT_CAP;
     }
 
+    node -> function_decl.return_type = (AstSpan) {0};
+
     return node;
 }
 
@@ -158,12 +160,13 @@ AstNode* ast_make_block_node(void) {
     return node;
 }
 
-AstNode* ast_make_fn_call_node(void) {
+AstNode* ast_make_fn_call_node(AstNode* ident) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
     node -> kind = A_Call;
+    node -> fn_call.ident = ident;
     node -> fn_call.args = arena_alloc(
         arena,
         sizeof(AstNode*) * PARAM_DEFAULT_CAP
@@ -189,6 +192,119 @@ AstNode* ast_make_struct_init_node(void) {
 
     return node;
 }
+
+AstNode* ast_make_index_node(AstNode* ident, AstNode* index) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Index;
+
+    node -> index_access.ident = ident;
+    node -> index_access.index = index;
+
+    return node;
+}
+
+AstNode* ast_make_member_access_node(AstNode* ident, Token* field) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Index;
+
+    node -> member_access.target = ident;
+    node -> member_access.field_ptr = field -> lexeme;
+    node -> member_access.field_len = field -> length;
+
+    return node;
+}
+
+AstNode* ast_make_literal_node(Token* token) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Literal;
+
+    node -> literal.kind = token -> kind;
+    node -> literal.ptr = token -> lexeme;
+    node -> literal.len = token -> length;
+
+    return node;
+}
+
+AstNode* ast_make_ident_node(Token* token) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Ident;
+
+    node -> ident.ptr = token -> lexeme;
+    node -> ident.len = token -> length;
+
+    return node;
+}
+
+AstNode* ast_make_assign_node(AstNode* target, AstNode* value, TokenKind op) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Assign;
+
+    node -> assign.target = target;
+    node -> assign.value = value;
+    node -> assign.op = op;
+
+    return node;
+}
+
+AstNode* ast_make_binop_node(AstNode* left, AstNode* right, TokenKind op) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Binary;
+
+    node -> binary_op.left = left;
+    node -> binary_op.op = op;
+    node -> binary_op.right = right;
+
+    return node;
+}
+
+AstNode* ast_make_cast_node(AstNode* expr, AstSpan type) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Cast;
+
+    node -> cast.expr = expr;
+    node -> cast.target_type = type;
+
+    return node;
+}
+
+AstNode* ast_make_unary_node(AstNode* operand, TokenKind op) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Unary;
+
+    node -> unary_op.operand = operand;
+    node -> unary_op.op = op;
+
+    return node;
+}
+
+// 
+//
+//
+//
 
 void ast_init_module_decl(AstNode* node) {
     assert(node);
@@ -275,4 +391,56 @@ void ast_fn_param_push(AstNode* node, AstParam param) {
     }
 
     node -> function_decl.params[node -> function_decl.param_count++] = param;
+}
+
+void ast_fn_call_arg_push(AstNode* node, AstNode* arg) {
+    if (node -> fn_call.arg_count >= node -> fn_call.arg_capacity) {
+        usize size = node -> fn_call.arg_capacity * sizeof(AstNode*);
+
+        node -> fn_call.args = arena_realloc(
+            albedo_ctx.arena,
+            node -> fn_call.args,
+            size,
+            size * 2
+        );
+        node -> fn_call.arg_capacity *= 2;
+    }
+
+    node -> fn_call.args[node -> fn_call.arg_count++] = arg;
+}
+
+void ast_fn_generic_push(AstNode* node, Token* token) {
+    if (node -> function_decl.generic_count >= node -> function_decl.generic_capacity) {
+        usize size = node -> function_decl.generic_capacity * sizeof(AstGenericParam);
+
+        node -> function_decl.generics = arena_realloc(
+            albedo_ctx.arena,
+            node -> function_decl.generics,
+            size,
+            size * 2
+        );
+        node -> function_decl.generic_capacity *= 2;
+    }
+
+    node -> function_decl.generics[node -> function_decl.generic_count++] = (AstGenericParam) {
+        .name_ptr = token -> lexeme,
+        .name_len = token -> length
+    };
+}
+
+void ast_block_stmt_push(AstNode* node, AstNode* stmt) {
+    if (node -> block.stmt_count >= node -> block.stmt_capacity) {
+        usize size = node -> block.stmt_capacity * sizeof(AstNode*);
+
+        node -> block.stmts = arena_realloc(
+            albedo_ctx.arena,
+            node -> block.stmts,
+            size,
+            size * 2
+        );
+
+        node -> block.stmt_capacity *= 2;
+    }
+
+    node -> block.stmts[node -> block.stmt_count++] = stmt;
 }

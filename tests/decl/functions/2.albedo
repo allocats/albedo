@@ -1,0 +1,3 @@
+fn<T> push(vec: *Vec<T>, item: T): bool {
+
+}

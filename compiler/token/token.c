@@ -4,6 +4,13 @@
 
 #include <stdio.h>
 
+void print_token(Token* token) {
+    printf("Token: {\n");
+    printf("  Lexeme: %.*s\n", token -> length, token -> lexeme);
+    printf("  Length: %d\n", token -> length);
+    printf("}\n\n");
+}
+
 void print_tokens(Tokens tokens) {
     for (u32 i = 0; i < tokens.count; i++) {
         Token tok = tokens.items[i];
