@@ -26,6 +26,7 @@ AstSpan parse_type_span(Parser* p) {
             LOC_WHOLE_LINE,
             p -> file_index
         );
+
         return (AstSpan) { .start_index = 0, .end_index = 0 };
     }
 

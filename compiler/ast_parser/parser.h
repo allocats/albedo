@@ -39,8 +39,10 @@ AstNode* parse_expression(Parser* p);
 */
 void recover_top_level_decl(Parser* p);
 void recover_fn_param_decl(Parser* p);
+void recover_stmt(Parser* p);
 
 AstNode* top_level_decl_parse_fail(Parser* p, AstNode* node);
+AstNode* stmt_parse_fail(Parser* p, AstNode* node);
 
 /*
 *   Parser movement and token consumption

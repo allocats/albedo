@@ -3,9 +3,6 @@
 #include "../../ast/ast.h" 
 #include "../../albedo/types.h" 
 #include "../../diagnostics/diagnostics.h" 
-#include "../../token/token.h" 
-
-#include <stdio.h>
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
@@ -13,32 +10,22 @@ extern DiagnosticCtx diag_ctx;
 AstNode* parse_block(Parser* p) {
     AstNode* node = ast_make_block_node();
 
-    u32 depth = 1;
-
     parser_advance(p);
 
-    while (depth > 0 && p -> cursor < p -> count) {
+    while (p -> cursor < p -> count) {
         Token* token = parser_peek(p);
 
-        if (token -> kind == T_LBrace) {
-            depth++;
+        switch (token -> kind) {
+            case T_LBrace: {
+                AstNode* block_stmt = parse_block(p);
+                ast_block_stmt_push(node, block_stmt);
+            } break;
 
-            parser_advance(p);
-
-            continue;
-        } else if (token -> kind == T_RBrace) {
-            depth--;
-
-            parser_advance(p);
-
-            if (depth == 0) {
+            case T_RBrace: {
+                parser_advance(p);
                 return node;
             };
 
-            continue;
-        }
-
-        switch (token -> kind) {
             case T_Let: {
                 parser_advance(p);
 
@@ -53,7 +40,8 @@ AstNode* parse_block(Parser* p) {
                         p -> file_index
                     );
 
-                    // recover
+                    recover_stmt(p);
+                    continue;
                 } 
 
                 parser_advance(p);
@@ -62,7 +50,15 @@ AstNode* parse_block(Parser* p) {
             } break;
 
             default: {
-                // error
+                err_ast_add(
+                    "expected statement",
+                    null,
+                    token,
+                    LOC_WHOLE_LINE,
+                    p -> file_index
+                );
+
+                recover_stmt(p);
             } break;
         }
     }
