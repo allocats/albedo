@@ -74,8 +74,6 @@ AstSpan parse_type_span(Parser* p) {
     }
 
     while (parser_check(p, T_LBracket)) {
-        parser_advance(p);
-
         while (p -> cursor < p -> count && !parser_check(p, T_RBracket)) {
             parser_advance(p);
         }
@@ -91,6 +89,8 @@ AstSpan parse_type_span(Parser* p) {
             // recover
             return (AstSpan) { .start_index = 0, .end_index = 0 };
         }
+
+        parser_advance(p);
     }
 
     u32 end = p -> cursor;
