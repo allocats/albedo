@@ -1,7 +1,7 @@
 #include "albedo.h"
 
 #include "../buffers/buffers.h"
-#include "../diagnostics/diagnostics.h"
+#include "../diagnostics/types.h"
 
 #include <stdio.h>
 

@@ -9,7 +9,7 @@ typedef struct {
     u32 capacity;    // Capacity of has_more array
 } PrintContext;
 
-void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx, bool is_last);
+void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx, bool is_last);
 void print_tree_indent(FILE* fd, PrintContext* ctx, bool is_last, bool is_continuation);
 void print_segment(FILE* fd, AstSegment segment);
 void print_span(FILE* fd, Tokens* tokens, AstSpan span);
@@ -40,7 +40,7 @@ void print_ast(FILE* fd, ParseTree* tree, Tokens* tokens) {
 
     for (usize i = 0; i < tree->count; i++) {
         bool is_last = (i == tree->count - 1);
-        print_node_tree(0, fd, tree->nodes[i], tokens, &ctx, is_last);
+        print_node_tree(fd, tree->nodes[i], tokens, &ctx, is_last);
 
         if (i != tree->count - 1) {
             fprintf(fd, "\n");
@@ -81,7 +81,7 @@ void print_continuation_indent(FILE* fd, PrintContext* ctx) {
     }
 }
 
-void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx, bool is_last) {
+void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx, bool is_last) {
     if (node == nullptr) {
         print_tree_indent(fd, ctx, is_last, false);
         fprintf(fd, "<None>\n");
@@ -257,9 +257,9 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                         ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
                         
                         if (field->kind == FieldStruct) {
-                            print_node_tree(0, fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
+                            print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
                         } else if (field->kind == FieldUnion) {
-                            print_node_tree(0, fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
+                            print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
                         }
 
                         if (field->default_value != nullptr) {
@@ -267,7 +267,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                             print_tree_indent(fd, ctx, true, false);
                             fprintf(fd, "Default Value:\n");
                             ctx->depth++;
-                            print_node_tree(0, fd, field->default_value, tokens, ctx, true);
+                            print_node_tree(fd, field->default_value, tokens, ctx, true);
                             ctx->depth--;
                         }
                         ctx->depth--;
@@ -359,7 +359,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Body:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->function_decl.body, tokens, ctx, true);
+            print_node_tree(fd, node->function_decl.body, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -423,7 +423,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                             print_tree_indent(fd, ctx, true, false);
                             fprintf(fd, "Default Value:\n");
                             ctx->depth++;
-                            print_node_tree(0, fd, field->default_value, tokens, ctx, true);
+                            print_node_tree(fd, field->default_value, tokens, ctx, true);
                             ctx->depth--;
                             ctx->depth--;
                         }
@@ -434,9 +434,9 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                         ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
 
                         if (field->kind == FieldStruct) {
-                            print_node_tree(0, fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
+                            print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
                         } else if (field->kind == FieldUnion) {
-                            print_node_tree(0, fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
+                            print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
                         }
 
                         if (field->default_value != nullptr) {
@@ -444,7 +444,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                             print_tree_indent(fd, ctx, true, false);
                             fprintf(fd, "Default Value:\n");
                             ctx->depth++;
-                            print_node_tree(0, fd, field->default_value, tokens, ctx, true);
+                            print_node_tree(fd, field->default_value, tokens, ctx, true);
                             ctx->depth--;
                         }
                         ctx->depth--;
@@ -502,7 +502,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                         print_tree_indent(fd, ctx, true, false);
                         fprintf(fd, "Value:\n");
                         ctx->depth++;
-                        print_node_tree(0, fd, variant->value, tokens, ctx, true);
+                        print_node_tree(fd, variant->value, tokens, ctx, true);
                         ctx->depth--;
                         ctx->depth--;
                     } else {
@@ -593,9 +593,9 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                                     fprintf(fd, "\n");
                                     ctx->depth++;
                                     if (field->kind == FieldStruct) {
-                                        print_node_tree(0, fd, field->struct_decl, tokens, ctx, true);
+                                        print_node_tree(fd, field->struct_decl, tokens, ctx, true);
                                     } else if (field->kind == FieldUnion) {
-                                        print_node_tree(0, fd, field->union_decl, tokens, ctx, true);
+                                        print_node_tree(fd, field->union_decl, tokens, ctx, true);
                                     }
                                     ctx->depth--;
                                 }
@@ -649,9 +649,9 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                         fprintf(fd, "\n");
                         ctx->depth++;
                         if (field->kind == FieldStruct) {
-                            print_node_tree(0, fd, field->struct_decl, tokens, ctx, true);
+                            print_node_tree(fd, field->struct_decl, tokens, ctx, true);
                         } else if (field->kind == FieldUnion) {
-                            print_node_tree(0, fd, field->union_decl, tokens, ctx, true);
+                            print_node_tree(fd, field->union_decl, tokens, ctx, true);
                         }
                         ctx->depth--;
                     }
@@ -677,7 +677,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                 ctx->depth++;
                 ensure_context_capacity(ctx);
                 for (usize i = 0; i < node->block.stmt_count; i++) {
-                    print_node_tree(0, fd, node->block.stmts[i], tokens, ctx, i == node->block.stmt_count - 1);
+                    print_node_tree(fd, node->block.stmts[i], tokens, ctx, i == node->block.stmt_count - 1);
                 }
                 ctx->depth--;
                 ctx->depth--;
@@ -702,7 +702,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Statement:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->defer_stmt.stmt, tokens, ctx, true);
+            print_node_tree(fd, node->defer_stmt.stmt, tokens, ctx, true);
             ctx->depth--;
             ctx->depth--;
             break;
@@ -718,7 +718,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Expression:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->return_stmt.expr, tokens, ctx, true);
+            print_node_tree(fd, node->return_stmt.expr, tokens, ctx, true);
             ctx->depth--;
             ctx->depth--;
             break;
@@ -790,7 +790,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Value:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->static_decl.value, tokens, ctx, true);
+            print_node_tree(fd, node->static_decl.value, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -823,7 +823,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Value:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->const_decl.value, tokens, ctx, true);
+            print_node_tree(fd, node->const_decl.value, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -852,7 +852,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Value:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->var_decl.value, tokens, ctx, true);
+            print_node_tree(fd, node->var_decl.value, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -887,14 +887,14 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                 print_tree_indent(fd, ctx, false, false);
                 fprintf(fd, "Condition:\n");
                 ctx->depth++;
-                print_node_tree(0, fd, branch->condition, tokens, ctx, true);
+                print_node_tree(fd, branch->condition, tokens, ctx, true);
                 ctx->depth--;
 
                 ctx->has_more[ctx->depth - 1] = false;
                 print_tree_indent(fd, ctx, true, false);
                 fprintf(fd, "Block:\n");
                 ctx->depth++;
-                print_node_tree(0, fd, branch->block, tokens, ctx, true);
+                print_node_tree(fd, branch->block, tokens, ctx, true);
                 ctx->depth--;
 
                 ctx->depth--;
@@ -906,7 +906,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                 print_tree_indent(fd, ctx, true, false);
                 fprintf(fd, "Else Block:\n");
                 ctx->depth++;
-                print_node_tree(0, fd, node->if_stmt.else_block, tokens, ctx, true);
+                print_node_tree(fd, node->if_stmt.else_block, tokens, ctx, true);
                 ctx->depth--;
             }
 
@@ -925,7 +925,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Target:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->match_stmt.target, tokens, ctx, true);
+            print_node_tree(fd, node->match_stmt.target, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = (node->match_stmt.default_block != nullptr);
@@ -966,7 +966,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                     print_tree_indent(fd, ctx, true, false);
                     fprintf(fd, "Block:\n");
                     ctx->depth++;
-                    print_node_tree(0, fd, arm->block, tokens, ctx, true);
+                    print_node_tree(fd, arm->block, tokens, ctx, true);
                     ctx->depth--;
 
                     ctx->depth--;
@@ -979,7 +979,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                 print_tree_indent(fd, ctx, true, false);
                 fprintf(fd, "Default Block:\n");
                 ctx->depth++;
-                print_node_tree(0, fd, node->match_stmt.default_block, tokens, ctx, true);
+                print_node_tree(fd, node->match_stmt.default_block, tokens, ctx, true);
                 ctx->depth--;
             }
 
@@ -998,14 +998,14 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Condition:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->while_loop.condition, tokens, ctx, true);
+            print_node_tree(fd, node->while_loop.condition, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Block:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->while_loop.block, tokens, ctx, true);
+            print_node_tree(fd, node->while_loop.block, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -1022,7 +1022,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Block:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->loop_loop.block, tokens, ctx, true);
+            print_node_tree(fd, node->loop_loop.block, tokens, ctx, true);
             ctx->depth--;
             ctx->depth--;
             break;
@@ -1043,14 +1043,14 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Iterator:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->for_loop.iterator, tokens, ctx, true);
+            print_node_tree(fd, node->for_loop.iterator, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Block:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->for_loop.block, tokens, ctx, true);
+            print_node_tree(fd, node->for_loop.block, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -1072,14 +1072,14 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Left:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->binary_op.left, tokens, ctx, true);
+            print_node_tree(fd, node->binary_op.left, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Right:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->binary_op.right, tokens, ctx, true);
+            print_node_tree(fd, node->binary_op.right, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -1101,7 +1101,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Operand:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->unary_op.operand, tokens, ctx, true);
+            print_node_tree(fd, node->unary_op.operand, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -1123,14 +1123,14 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Target:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->assign.target, tokens, ctx, true);
+            print_node_tree(fd, node->assign.target, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Value:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->assign.value, tokens, ctx, true);
+            print_node_tree(fd, node->assign.value, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -1148,7 +1148,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, node->fn_call.arg_count == 0, false);
             fprintf(fd, "Function:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->fn_call.ident, tokens, ctx, true);
+            print_node_tree(fd, node->fn_call.ident, tokens, ctx, true);
             ctx->depth--;
 
             if (node->fn_call.arg_count > 0) {
@@ -1159,7 +1159,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                 ctx->depth++;
                 ensure_context_capacity(ctx);
                 for (u32 i = 0; i < node->fn_call.arg_count; i++) {
-                    print_node_tree(0, fd, node->fn_call.args[i], tokens, ctx, i == node->fn_call.arg_count - 1);
+                    print_node_tree(fd, node->fn_call.args[i], tokens, ctx, i == node->fn_call.arg_count - 1);
                 }
                 ctx->depth--;
             }
@@ -1194,14 +1194,14 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Target:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->index_access.ident, tokens, ctx, true);
+            print_node_tree(fd, node->index_access.ident, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
             fprintf(fd, "Index:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->index_access.index, tokens, ctx, true);
+            print_node_tree(fd, node->index_access.index, tokens, ctx, true);
             ctx->depth--;
 
             ctx->depth--;
@@ -1219,7 +1219,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Target:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->member_access.target, tokens, ctx, true);
+            print_node_tree(fd, node->member_access.target, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
@@ -1241,7 +1241,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Expression:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->cast.expr, tokens, ctx, true);
+            print_node_tree(fd, node->cast.expr, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
@@ -1266,7 +1266,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
             print_tree_indent(fd, ctx, node->struct_init.field_count == 0, false);
             fprintf(fd, "Type:\n");
             ctx->depth++;
-            print_node_tree(0, fd, node->struct_init.ident, tokens, ctx, true);
+            print_node_tree(fd, node->struct_init.ident, tokens, ctx, true);
             ctx->depth--;
 
             if (node->struct_init.field_count > 0) {
@@ -1291,7 +1291,7 @@ void print_node_tree(u32 indent, FILE* fd, AstNode* node, Tokens* tokens, PrintC
                     print_tree_indent(fd, ctx, true, false);
                     fprintf(fd, "Value:\n");
                     ctx->depth++;
-                    print_node_tree(0, fd, field_init->value, tokens, ctx, true);
+                    print_node_tree(fd, field_init->value, tokens, ctx, true);
                     ctx->depth--;
                     ctx->depth--;
                 }

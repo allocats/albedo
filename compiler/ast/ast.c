@@ -5,8 +5,6 @@
 #include "types.h"
 
 #include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
