@@ -31,6 +31,7 @@ AstNode* ast_make_union_node(void);
 AstNode* ast_make_tunion_node(void);
 AstNode* ast_make_match_node(void);
 AstNode* ast_make_block_node(void);
+AstNode* ast_make_return_node(AstNode* expr);
 AstNode* ast_make_fn_call_node(AstNode* ident);
 AstNode* ast_make_struct_init_node(void);
 
@@ -66,6 +67,8 @@ void ast_block_stmt_push(AstNode* node, AstNode* stmt);
 */
 #include "../ast_parser/types.h"
 
-void print_ast(ParseTree* tree);
+#include <stdio.h>
+
+void print_ast(FILE* fd, ParseTree* tree, Tokens* tokens);
 
 #endif // !AST_H
