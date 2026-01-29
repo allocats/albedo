@@ -26,6 +26,7 @@ AstSpan parse_type_span(Parser* p);
 AstNode* parse_module_decl(Parser* p);
 AstNode* parse_import_decl(Parser* p);
 AstNode* parse_fn_decl(Parser* p);
+AstNode* parse_struct_decl(Parser* p);
 
 // statements
 AstNode* parse_block(Parser* p) ;

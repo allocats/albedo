@@ -154,23 +154,11 @@ typedef struct {
     AstNode* body;
 } AstFunction;
 
-typedef enum {
-    FieldBasic,
-    FieldStruct,
-    FieldUnion,
-} FieldKind;
-
 typedef struct {
     char* name_ptr;
     usize name_len;
 
-    FieldKind kind;
-
-    union {
-        AstSpan  basic_type;
-        AstNode* struct_decl;
-        AstNode* union_decl;
-    };
+    AstSpan type_span;
 
     // Optional, null to indicate no expression 
     AstNode* default_value;

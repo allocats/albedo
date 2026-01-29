@@ -34,7 +34,7 @@ void ensure_context_capacity(PrintContext* ctx) {
 }
 
 void print_ast(FILE* fd, ParseTree* tree, Tokens* tokens) {
-    fprintf(fd, "====== AST DUMP =======\n\n"); 
+    fprintf(fd, "============ AST DUMP =============\n\n"); 
 
     PrintContext ctx = create_print_context();
 
@@ -47,7 +47,7 @@ void print_ast(FILE* fd, ParseTree* tree, Tokens* tokens) {
         }
     }
 
-    fprintf(fd, "\n=======================\n\n"); 
+    fprintf(fd, "\n===================================\n\n"); 
     free_print_context(&ctx);
 }
 
@@ -246,32 +246,36 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                     print_tree_indent(fd, ctx, is_last_field, false);
                     fprintf(fd, "%u. %.*s", i, (i32)field->name_len, field->name_ptr);
 
-                    if (field->kind == FieldBasic) {
-                        fprintf(fd, ": ");
-                        print_span(fd, tokens, field->basic_type);
-                        fprintf(fd, "\n");
-                    } else {
-                        fprintf(fd, "\n");
-                        ctx->depth++;
-                        ensure_context_capacity(ctx);
-                        ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
-                        
-                        if (field->kind == FieldStruct) {
-                            print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
-                        } else if (field->kind == FieldUnion) {
-                            print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
-                        }
+                    fprintf(fd, ": ");
+                    print_span(fd, tokens, field->type_span);
+                    fprintf(fd, "\n");
 
-                        if (field->default_value != nullptr) {
-                            ctx->has_more[ctx->depth - 1] = false;
-                            print_tree_indent(fd, ctx, true, false);
-                            fprintf(fd, "Default Value:\n");
-                            ctx->depth++;
-                            print_node_tree(fd, field->default_value, tokens, ctx, true);
-                            ctx->depth--;
-                        }
-                        ctx->depth--;
-                    }
+                    // if (field->kind == FieldBasic) {
+                    //     fprintf(fd, ": ");
+                    //     print_span(fd, tokens, field->basic_type);
+                    //     fprintf(fd, "\n");
+                    // } else {
+                    //     fprintf(fd, "\n");
+                    //     ctx->depth++;
+                    //     ensure_context_capacity(ctx);
+                    //     ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
+                    //
+                    //     if (field->kind == FieldStruct) {
+                    //         print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
+                    //     } else if (field->kind == FieldUnion) {
+                    //         print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
+                    //     }
+                    //
+                    //     if (field->default_value != nullptr) {
+                    //         ctx->has_more[ctx->depth - 1] = false;
+                    //         print_tree_indent(fd, ctx, true, false);
+                    //         fprintf(fd, "Default Value:\n");
+                    //         ctx->depth++;
+                    //         print_node_tree(fd, field->default_value, tokens, ctx, true);
+                    //         ctx->depth--;
+                    //     }
+                    //     ctx->depth--;
+                    // }
                 }
                 ctx->depth--;
             }
@@ -405,50 +409,54 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                     bool is_last_field = (i == node->struct_decl.field_count - 1);
                     ctx->has_more[ctx->depth - 1] = !is_last_field;
 
-                    const char* kind_str = field->kind == FieldBasic ? "Basic" : 
-                                          (field->kind == FieldStruct ? "Struct" : "Union");
+                    // const char* kind_str = field->kind == FieldBasic ? "Basic" : 
+                    //                       (field->kind == FieldStruct ? "Struct" : "Union");
 
                     print_tree_indent(fd, ctx, is_last_field, false);
-                    fprintf(fd, "%u. [%s] %.*s", i, kind_str, (i32)field->name_len, field->name_ptr);
+                    fprintf(fd, "%u. %.*s", i, (i32)field->name_len, field->name_ptr);
 
-                    if (field->kind == FieldBasic) {
-                        fprintf(fd, ": ");
-                        print_span(fd, tokens, field->basic_type);
-                        fprintf(fd, "\n");
+                    fprintf(fd, ": ");
+                    print_span(fd, tokens, field->type_span);
+                    fprintf(fd, "\n");
 
-                        if (field->default_value != nullptr) {
-                            ctx->depth++;
-                            ensure_context_capacity(ctx);
-                            ctx->has_more[ctx->depth - 1] = false;
-                            print_tree_indent(fd, ctx, true, false);
-                            fprintf(fd, "Default Value:\n");
-                            ctx->depth++;
-                            print_node_tree(fd, field->default_value, tokens, ctx, true);
-                            ctx->depth--;
-                            ctx->depth--;
-                        }
-                    } else {
-                        fprintf(fd, "\n");
-                        ctx->depth++;
-                        ensure_context_capacity(ctx);
-                        ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
-
-                        if (field->kind == FieldStruct) {
-                            print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
-                        } else if (field->kind == FieldUnion) {
-                            print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
-                        }
-
-                        if (field->default_value != nullptr) {
-                            ctx->has_more[ctx->depth - 1] = false;
-                            print_tree_indent(fd, ctx, true, false);
-                            fprintf(fd, "Default Value:\n");
-                            ctx->depth++;
-                            print_node_tree(fd, field->default_value, tokens, ctx, true);
-                            ctx->depth--;
-                        }
-                        ctx->depth--;
-                    }
+                    // if (field->kind == FieldBasic) {
+                    //     fprintf(fd, ": ");
+                    //     print_span(fd, tokens, field->basic_type);
+                    //     fprintf(fd, "\n");
+                    //
+                    //     if (field->default_value != nullptr) {
+                    //         ctx->depth++;
+                    //         ensure_context_capacity(ctx);
+                    //         ctx->has_more[ctx->depth - 1] = false;
+                    //         print_tree_indent(fd, ctx, true, false);
+                    //         fprintf(fd, "Default Value:\n");
+                    //         ctx->depth++;
+                    //         print_node_tree(fd, field->default_value, tokens, ctx, true);
+                    //         ctx->depth--;
+                    //         ctx->depth--;
+                    //     }
+                    // } else {
+                    //     fprintf(fd, "\n");
+                    //     ctx->depth++;
+                    //     ensure_context_capacity(ctx);
+                    //     ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
+                    //
+                    //     if (field->kind == FieldStruct) {
+                    //         print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
+                    //     } else if (field->kind == FieldUnion) {
+                    //         print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
+                    //     }
+                    //
+                    //     if (field->default_value != nullptr) {
+                    //         ctx->has_more[ctx->depth - 1] = false;
+                    //         print_tree_indent(fd, ctx, true, false);
+                    //         fprintf(fd, "Default Value:\n");
+                    //         ctx->depth++;
+                    //         print_node_tree(fd, field->default_value, tokens, ctx, true);
+                    //         ctx->depth--;
+                    //     }
+                    //     ctx->depth--;
+                    // }
                 }
                 ctx->depth--;
             }
@@ -585,20 +593,24 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                                 print_tree_indent(fd, ctx, is_last_field, false);
                                 fprintf(fd, "%u. %.*s", j, (i32)field->name_len, field->name_ptr);
 
-                                if (field->kind == FieldBasic) {
                                     fprintf(fd, ": ");
-                                    print_span(fd, tokens, field->basic_type);
+                                    print_span(fd, tokens, field->type_span);
                                     fprintf(fd, "\n");
-                                } else {
-                                    fprintf(fd, "\n");
-                                    ctx->depth++;
-                                    if (field->kind == FieldStruct) {
-                                        print_node_tree(fd, field->struct_decl, tokens, ctx, true);
-                                    } else if (field->kind == FieldUnion) {
-                                        print_node_tree(fd, field->union_decl, tokens, ctx, true);
-                                    }
-                                    ctx->depth--;
-                                }
+
+                                // if (field->kind == FieldBasic) {
+                                //     fprintf(fd, ": ");
+                                //     print_span(fd, tokens, field->basic_type);
+                                //     fprintf(fd, "\n");
+                                // } else {
+                                //     fprintf(fd, "\n");
+                                //     ctx->depth++;
+                                //     if (field->kind == FieldStruct) {
+                                //         print_node_tree(fd, field->struct_decl, tokens, ctx, true);
+                                //     } else if (field->kind == FieldUnion) {
+                                //         print_node_tree(fd, field->union_decl, tokens, ctx, true);
+                                //     }
+                                //     ctx->depth--;
+                                // }
                             }
                             ctx->depth--;
                         }
@@ -635,26 +647,31 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                     bool is_last_field = (i == node->union_decl.field_count - 1);
                     ctx->has_more[ctx->depth - 1] = !is_last_field;
 
-                    const char* kind_str = field->kind == FieldBasic ? "Basic" : 
-                                          (field->kind == FieldStruct ? "Struct" : "Union");
+                    // const char* kind_str = field->kind == FieldBasic ? "Basic" : 
+                    //                       (field->kind == FieldStruct ? "Struct" : "Union");
 
                     print_tree_indent(fd, ctx, is_last_field, false);
-                    fprintf(fd, "%u. [%s] %.*s", i, kind_str, (i32)field->name_len, field->name_ptr);
+                    // fprintf(fd, "%u. [%s] %.*s", i, kind_str, (i32)field->name_len, field->name_ptr);
+                    fprintf(fd, "%u. %.*s", i, (i32)field->name_len, field->name_ptr);
 
-                    if (field->kind == FieldBasic) {
-                        fprintf(fd, ": ");
-                        print_span(fd, tokens, field->basic_type);
-                        fprintf(fd, "\n");
-                    } else {
-                        fprintf(fd, "\n");
-                        ctx->depth++;
-                        if (field->kind == FieldStruct) {
-                            print_node_tree(fd, field->struct_decl, tokens, ctx, true);
-                        } else if (field->kind == FieldUnion) {
-                            print_node_tree(fd, field->union_decl, tokens, ctx, true);
-                        }
-                        ctx->depth--;
-                    }
+                    fprintf(fd, ": ");
+                    print_span(fd, tokens, field->type_span);
+                    fprintf(fd, "\n");
+
+                    // if (field->kind == FieldBasic) {
+                    //     fprintf(fd, ": ");
+                    //     print_span(fd, tokens, field->basic_type);
+                    //     fprintf(fd, "\n");
+                    // } else {
+                    //     fprintf(fd, "\n");
+                    //     ctx->depth++;
+                    //     if (field->kind == FieldStruct) {
+                    //         print_node_tree(fd, field->struct_decl, tokens, ctx, true);
+                    //     } else if (field->kind == FieldUnion) {
+                    //         print_node_tree(fd, field->union_decl, tokens, ctx, true);
+                    //     }
+                    //     ctx->depth--;
+                    // }
                 }
                 ctx->depth--;
             }

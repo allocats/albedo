@@ -438,6 +438,41 @@ void ast_fn_generic_push(AstNode* node, Token* token) {
     };
 }
 
+void ast_struct_generic_push(AstNode* node, Token* token) {
+    if (node -> struct_decl.generic_count >= node -> struct_decl.generic_capacity) {
+        usize size = node -> struct_decl.generic_capacity * sizeof(AstGenericParam);
+
+        node -> struct_decl.generics = arena_realloc(
+            albedo_ctx.arena,
+            node -> struct_decl.generics,
+            size,
+            size * 2
+        );
+        node -> struct_decl.generic_capacity *= 2;
+    }
+
+    node -> struct_decl.generics[node -> struct_decl.generic_count++] = (AstGenericParam) {
+        .name_ptr = token -> lexeme,
+        .name_len = token -> length
+    };
+}
+
+void ast_struct_field_push(AstNode* node, AstField field) {
+    if (node -> struct_decl.field_count >= node -> struct_decl.field_capacity) {
+        usize size = node -> struct_decl.field_capacity * sizeof(AstField);
+
+        node -> struct_decl.fields = arena_realloc(
+            albedo_ctx.arena,
+            node -> struct_decl.fields,
+            size,
+            size * 2
+        );
+        node -> struct_decl.field_capacity *= 2;
+    }
+
+    node -> struct_decl.fields[node -> struct_decl.field_count++] = field;
+}
+
 void ast_block_stmt_push(AstNode* node, AstNode* stmt) {
     if (node -> block.stmt_count >= node -> block.stmt_capacity) {
         usize size = node -> block.stmt_capacity * sizeof(AstNode*);

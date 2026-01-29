@@ -30,6 +30,10 @@ void parse_tokens(void) {
                 node = parse_import_decl(&parser);
             } break;
 
+            case T_Struct: {
+                node = parse_struct_decl(&parser);
+            } break;
+                           
             case T_Fn: {
                 node = parse_fn_decl(&parser);
             } break;

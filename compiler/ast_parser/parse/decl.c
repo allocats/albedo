@@ -155,7 +155,7 @@ AstNode* parse_import_decl(Parser* p) {
     return node;
 }
 
-bool parse_generic_params(Parser* p, AstNode* node) {
+bool parse_generic_params(Parser* p, AstNode* node, void (*push_fn)(AstNode*, Token*)) {
     while (p -> cursor < p -> count) {
         Token* param = parser_peek(p);
 
@@ -171,7 +171,7 @@ bool parse_generic_params(Parser* p, AstNode* node) {
             return false;
         }
 
-        ast_fn_generic_push(node, param);
+        push_fn(node, param);
 
         parser_advance(p);
 
@@ -292,7 +292,7 @@ AstNode* parse_fn_decl(Parser* p) {
     if (parser_check(p, T_Lt)) {
         parser_advance(p);
 
-        if (!parse_generic_params(p, node)) {
+        if (!parse_generic_params(p, node, ast_fn_generic_push)) {
             return top_level_decl_parse_fail(p, node);
         }
     }
@@ -352,6 +352,140 @@ AstNode* parse_fn_decl(Parser* p) {
     node -> function_decl.body = parse_block(p);
 
     node -> span.end = p -> cursor - 1;
+
+    return node;
+}
+
+AstNode* parse_struct_decl(Parser* p) {
+    AstNode* node = ast_make_struct_node(false);
+
+    node -> span.start = p -> cursor - 1;
+
+    Token* name = parser_peek(p);
+
+    if (name -> kind != T_Ident) {
+        err_ast_add(
+            "expected struct name",
+            "add a valid identifier here",
+            name,
+            LOC_WHOLE_TOK,
+            p -> file_index
+        );
+
+        return top_level_decl_parse_fail(p, node);
+    }
+
+    node -> struct_decl.name_ptr = name -> lexeme;
+    node -> struct_decl.name_len = name -> length;
+
+    parser_advance(p);
+
+    if (parser_check(p, T_Lt)) {
+        parser_advance(p);
+
+        if (!parse_generic_params(p, node, ast_struct_generic_push)) {
+            return top_level_decl_parse_fail(p, node);
+        }
+    }
+
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{' here",
+            name,
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        return top_level_decl_parse_fail(p, node);
+    }
+
+    parser_advance(p);
+
+    while (p -> cursor < p -> count) {
+        Token* field_name = parser_peek(p);
+
+        if (field_name -> kind != T_Ident) {
+            err_ast_add(
+                "expected field name",
+                "add a valid identifier here",
+                field_name,
+                LOC_WHOLE_TOK,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
+        }
+
+        parser_advance(p);
+
+        if (!parser_check(p, T_Colon)) {
+            err_ast_add(
+                "expected ':'",
+                "add a ':' here",
+                name,
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
+        }
+
+        parser_advance(p);
+
+        AstSpan field_type = parse_type_span(p);
+
+        if (field_type.start_index == 0 && field_type.end_index == 0) {
+            err_ast_add(
+                "expected type",
+                null,
+                parser_peek(p),
+                LOC_WHOLE_LINE,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
+        }
+
+        AstNode* field_value = null;
+
+        if (parser_check(p, T_Eq)) {
+            parser_advance(p);
+
+            field_value = parse_expression(p);
+        }
+
+        if (!parser_check(p, T_Semi)) {
+            err_ast_add(
+                "expected ';'",
+                "add a ';' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
+        }
+
+        parser_advance(p);
+
+        AstField field = {
+            .name_ptr = field_name -> lexeme,
+            .name_len = field_name -> length,
+            .type_span = field_type,
+            .default_value = field_value
+        };
+
+        ast_struct_field_push(node, field);
+
+        if (parser_check(p, T_RBrace)) {
+            break;
+        }
+    }
+
+    node -> span.end = p -> cursor;
+
+    parser_advance(p);
 
     return node;
 }

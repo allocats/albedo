@@ -60,6 +60,9 @@ void ast_fn_param_push(AstNode* node, AstParam param);
 void ast_fn_generic_push(AstNode* node, Token* token);
 void ast_fn_call_arg_push(AstNode* node, AstNode* arg);
 
+void ast_struct_generic_push(AstNode* node, Token* token);
+void ast_struct_field_push(AstNode* node, AstField field);
+
 void ast_block_stmt_push(AstNode* node, AstNode* stmt);
 
 /*
