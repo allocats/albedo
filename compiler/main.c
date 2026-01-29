@@ -3,19 +3,18 @@
 
 #include "albedo/albedo.h"
 #include "albedo/types.h"
-#include "ast/ast.h"
 #include "ast_parser/parser.h"
 #include "arena/arena.h"
 #include "buffers/buffers.h"
 #include "diagnostics/diagnostics.h"
 #include "lexer/lexer.h"
-#include "token/token.h"
 #include "utils/ansi_codes.h"
 #include "utils/types.h"
 
 static ArenaAllocator arena = {0};
 
 extern AlbedoCtx albedo_ctx;
+extern DiagnosticCtx diag_ctx;
 
 i32 main(i32 argc, char* argv[]) {
     init_ansi_codes();
@@ -52,18 +51,38 @@ i32 main(i32 argc, char* argv[]) {
     parse_tokens();
 
     #ifdef DEBUG_MODE
+    #include "ast/ast.h"
+    #include "token/token.h"
+
     print_tokens(albedo_ctx.tokens);
-    print_ast(&albedo_ctx.ast);
+    print_ast(stdout, &albedo_ctx.ast, &albedo_ctx.tokens);
     #endif /* ifdef DEBUG_MODE */
 
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();
-        printf("failed");
         buffer_cleanup();
+        fprintf(
+            stderr,
+            "compilation %s%sfailed%s due to %s%s%u%s errors\n",
+            ANSI_BOLD,
+            ANSI_RED,
+            ANSI_RESET,
+            ANSI_BOLD,
+            ANSI_RED,
+            albedo_ctx.error_count,
+            ANSI_RESET
+        );
         return 1;
     }
 
-    printf("success");
+    fprintf(
+        stderr,
+        "\ncompiled %s%ssuccessfully%s\n",
+        ANSI_BOLD,
+        ANSI_MAGENTA,
+        ANSI_RESET
+    );
+
     buffer_cleanup();
 
     return 0;

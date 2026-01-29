@@ -48,6 +48,7 @@ typedef struct AstNode AstNode;
     X(A_Ident)          \
     X(A_Literal)        \
     X(A_Index)          \
+    X(A_MemberAccess)   \
     X(A_Cast)           \
     X(A_StructInit)     \
 

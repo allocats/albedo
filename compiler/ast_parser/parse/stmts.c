@@ -7,6 +7,36 @@
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
 
+#define CHECK_SEMI                  \
+    if (!parser_check(p, T_Semi)) { \
+        err_ast_add(                \
+            "expected ';'",         \
+            "add a ';' here",       \
+            parser_peek_prev(p),    \
+            LOC_END_OF_TOK,         \
+            p -> file_index         \
+            );                      \
+        recover_stmt(p);            \
+        continue;                   \
+    } 
+
+#define PARSE_STMT(fn)                      \
+    do {                                    \
+        parser_advance(p);                  \
+        AstNode* stmt = fn(p);              \
+        CHECK_SEMI;                         \
+        parser_advance(p);                  \
+        ast_block_stmt_push(node, stmt);    \
+    } while(0);
+
+#define PARSE_STMT_NO_ADVANCE(fn)           \
+    do {                                    \
+        AstNode* stmt = fn(p);              \
+        CHECK_SEMI;                         \
+        parser_advance(p);                  \
+        ast_block_stmt_push(node, stmt);    \
+    } while(0);
+
 AstNode* parse_block(Parser* p) {
     AstNode* node = ast_make_block_node();
 
@@ -27,26 +57,15 @@ AstNode* parse_block(Parser* p) {
             };
 
             case T_Let: {
-                parser_advance(p);
+                PARSE_STMT(parse_var_decl);
+            } break;
 
-                AstNode* stmt = parse_var_decl(p);
+            case T_Return: {
+                PARSE_STMT(parse_return);
+            } break;
 
-                if (!parser_check(p, T_Semi)) {
-                    err_ast_add(
-                        "expected ';'",
-                        "add a ';' here",
-                        parser_peek_prev(p),
-                        LOC_END_OF_TOK,
-                        p -> file_index
-                    );
-
-                    recover_stmt(p);
-                    continue;
-                } 
-
-                parser_advance(p);
-
-                ast_block_stmt_push(node, stmt);
+            case T_Ident: {
+                PARSE_STMT_NO_ADVANCE(parse_expression);
             } break;
 
             default: {
@@ -138,4 +157,9 @@ AstNode* parse_var_decl(Parser* p) {
     }
 
     return node;
+}
+
+AstNode* parse_return(Parser* p) {
+    AstNode* expr = parse_expression(p);
+    return ast_make_return_node(expr);
 }

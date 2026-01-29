@@ -93,7 +93,7 @@ AstSpan parse_type_span(Parser* p) {
         parser_advance(p);
     }
 
-    u32 end = p -> cursor;
+    u32 end = p -> cursor - 1;
 
     return (AstSpan) { .start_index = start, .end_index = end };
 }

@@ -8,7 +8,6 @@ void recover_stmt(Parser* p) {
             kind == T_Semi
         ) {
             parser_advance(p);
-
             return;
         }
 

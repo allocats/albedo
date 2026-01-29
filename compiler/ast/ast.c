@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
@@ -160,6 +161,17 @@ AstNode* ast_make_block_node(void) {
     return node;
 }
 
+AstNode* ast_make_return_node(AstNode* expr) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Return;
+    node -> return_stmt.expr = expr;
+
+    return node;
+}
+
 AstNode* ast_make_fn_call_node(AstNode* ident) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
@@ -211,7 +223,7 @@ AstNode* ast_make_member_access_node(AstNode* ident, Token* field) {
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
-    node -> kind = A_Index;
+    node -> kind = A_MemberAccess;
 
     node -> member_access.target = ident;
     node -> member_access.field_ptr = field -> lexeme;
@@ -336,7 +348,7 @@ void ast_module_segment_push(AstNode* node, Token* token) {
         *capacity *= 2;
     }
 
-    node -> module_decl.segments[*count++] = (AstSegment) {
+    node -> module_decl.segments[(*count)++] = (AstSegment) {
         .ptr = token -> lexeme,
         .len = token -> length
     };
@@ -371,7 +383,7 @@ void ast_import_lib_push(AstNode* node, Token* token) {
         *capacity *= 2;
     }
 
-    node -> import_decl.lib.segments[*count++] = (AstSegment) {
+    node -> import_decl.lib.segments[(*count)++] = (AstSegment) {
         .ptr = token -> lexeme,
         .len = token -> length
     };

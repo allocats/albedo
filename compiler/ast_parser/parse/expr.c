@@ -3,6 +3,9 @@
 #include "../../ast/ast.h" 
 #include "../../albedo/types.h" 
 #include "../../diagnostics/diagnostics.h" 
+#include "../../token/token.h"
+
+#include <stdio.h>
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;

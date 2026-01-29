@@ -1,0 +1,3 @@
+fn main() {
+    ident -> field = add(6, 7);
+}

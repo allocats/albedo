@@ -10,6 +10,8 @@ extern DiagnosticCtx diag_ctx;
 AstNode* parse_module_decl(Parser* p) {
     AstNode* node = arena_alloc(albedo_ctx.arena, sizeof(*node));
 
+    node -> span.start = p -> cursor - 1;
+
     if (!parser_check(p, T_Ident)) {
         err_ast_add(
             "expected identifier",
@@ -66,6 +68,8 @@ AstNode* parse_module_decl(Parser* p) {
         parser_advance(p);
     }
 
+    node -> span.end = p -> cursor;
+
     parser_advance(p);
     
     return node;
@@ -73,6 +77,8 @@ AstNode* parse_module_decl(Parser* p) {
 
 AstNode* parse_import_decl(Parser* p) {
     AstNode* node = arena_alloc(albedo_ctx.arena, sizeof(*node));
+    
+    node -> span.start = p -> cursor - 1;
 
     node -> kind = A_Import;
 
@@ -81,7 +87,7 @@ AstNode* parse_import_decl(Parser* p) {
         
         node -> import_decl.kind = ImportRel; 
         node -> import_decl.relative.ptr = token -> lexeme + 1;
-        node -> import_decl.relative.len = token -> length - 1;
+        node -> import_decl.relative.len = token -> length - 2;
 
         return node;
     }
@@ -141,6 +147,8 @@ AstNode* parse_import_decl(Parser* p) {
 
         parser_advance(p);
     }
+
+    node -> span.end = p -> cursor;
 
     parser_advance(p);
 
@@ -279,6 +287,8 @@ bool parse_params(Parser* p, AstNode* node) {
 AstNode* parse_fn_decl(Parser* p) {
     AstNode* node = ast_make_fn_node(false);
 
+    node -> span.start = p -> cursor - 1;
+
     if (parser_check(p, T_Lt)) {
         parser_advance(p);
 
@@ -341,7 +351,7 @@ AstNode* parse_fn_decl(Parser* p) {
 
     node -> function_decl.body = parse_block(p);
 
-    parser_advance(p);
+    node -> span.end = p -> cursor - 1;
 
     return node;
 }

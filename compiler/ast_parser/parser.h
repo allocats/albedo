@@ -29,6 +29,7 @@ AstNode* parse_fn_decl(Parser* p);
 
 // statements
 AstNode* parse_block(Parser* p) ;
+AstNode* parse_return(Parser* p); 
 AstNode* parse_var_decl(Parser* p);
 
 // expressions
