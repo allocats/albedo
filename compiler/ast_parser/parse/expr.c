@@ -46,7 +46,7 @@ AstNode* parse_expr_prec(Parser* p, Precedence min_prec) {
             AstSpan type_span = parse_type_span(p);
 
             if (type_span.start_index == 0) {
-                // return fail 
+                return null;
             }
 
             left = ast_make_cast_node(left, type_span);
@@ -124,7 +124,6 @@ AstNode* parse_primary(Parser* p) {
                 p -> file_index
             );
 
-            // recover expr_fail?
             return null;
         }
     }
@@ -209,8 +208,6 @@ AstNode* parse_postfix(Parser* p, AstNode* node) {
                         p -> file_index
                     );
 
-                    // fail
-                    // recover
                     return null;
                 }
 
@@ -233,7 +230,6 @@ AstNode* parse_postfix(Parser* p, AstNode* node) {
                         p -> file_index
                     );
 
-                    // recover/fail
                     return null;
                 }
 
@@ -256,7 +252,6 @@ AstNode* parse_postfix(Parser* p, AstNode* node) {
                         p -> file_index
                     );
 
-                    // recover/fail
                     return null;
                 }
 
@@ -274,6 +269,5 @@ AstNode* parse_postfix(Parser* p, AstNode* node) {
         }
     }
     
-    // this should be an error
-    return node;
+    return null;
 }

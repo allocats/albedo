@@ -45,7 +45,7 @@ AstSpan parse_type_span(Parser* p) {
                     LOC_WHOLE_LINE,
                     p -> file_index
                 );
-                // recover here
+
                 return (AstSpan) { .start_index = 0, .end_index = 0 };
             }
 
@@ -64,7 +64,7 @@ AstSpan parse_type_span(Parser* p) {
                     LOC_END_OF_TOK,
                     p -> file_index
                 );
-                // recover here
+                
                 return (AstSpan) { .start_index = 0, .end_index = 0 };
             }
 
@@ -85,7 +85,7 @@ AstSpan parse_type_span(Parser* p) {
                 LOC_END_OF_TOK,
                 p -> file_index
             );
-            // recover
+            
             return (AstSpan) { .start_index = 0, .end_index = 0 };
         }
 

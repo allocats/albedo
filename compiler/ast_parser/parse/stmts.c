@@ -29,14 +29,6 @@ extern DiagnosticCtx diag_ctx;
         ast_block_stmt_push(node, stmt);    \
     } while(0);
 
-#define PARSE_STMT_NO_ADVANCE(fn)           \
-    do {                                    \
-        AstNode* stmt = fn(p);              \
-        CHECK_SEMI;                         \
-        parser_advance(p);                  \
-        ast_block_stmt_push(node, stmt);    \
-    } while(0);
-
 AstNode* parse_block(Parser* p) {
     AstNode* node = ast_make_block_node();
 
@@ -65,7 +57,16 @@ AstNode* parse_block(Parser* p) {
             } break;
 
             case T_Ident: {
-                PARSE_STMT_NO_ADVANCE(parse_expression);
+                AstNode* stmt = parse_expression(p);
+                
+                if (!stmt) {
+                    recover_stmt(p);
+                    continue;
+                }
+
+                CHECK_SEMI;
+                parser_advance(p);
+                ast_block_stmt_push(node, stmt);
             } break;
 
             default: {
@@ -82,7 +83,6 @@ AstNode* parse_block(Parser* p) {
         }
     }
 
-    // Can only reach this if there is depth issue
     return top_level_decl_parse_fail(p, node);
 }
 
