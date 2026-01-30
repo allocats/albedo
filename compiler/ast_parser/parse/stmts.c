@@ -52,8 +52,16 @@ AstNode* parse_block(Parser* p) {
                 PARSE_STMT(parse_var_decl);
             } break;
 
+            case T_Const: {
+                PARSE_STMT(parse_const_decl);
+            } break;
+
             case T_Return: {
                 PARSE_STMT(parse_return);
+            } break;
+
+            case T_Defer: {
+                PARSE_STMT(parse_defer);
             } break;
 
             case T_Ident: {
@@ -65,7 +73,9 @@ AstNode* parse_block(Parser* p) {
                 }
 
                 CHECK_SEMI;
+
                 parser_advance(p);
+
                 ast_block_stmt_push(node, stmt);
             } break;
 
@@ -159,7 +169,106 @@ AstNode* parse_var_decl(Parser* p) {
     return node;
 }
 
+AstNode* parse_const_decl(Parser* p) {
+    AstNode* node = arena_alloc(albedo_ctx.arena, sizeof(*node));
+
+    node -> kind = A_Const;
+
+    parser_advance(p);
+
+    Token* name = parser_peek(p);
+
+    if (name -> kind != T_Ident) {
+        err_ast_add(
+            "expected constant name",
+            "add a valid constant name here",
+            name,
+            LOC_WHOLE_TOK,
+            p -> file_index
+        );
+
+        // todo: return fail 
+        return null;
+    } 
+
+    node -> const_decl.name_len = name -> length;
+    node -> const_decl.name_ptr = name -> lexeme;
+
+    parser_advance(p);
+
+    if (!parser_check(p, T_Colon)) {
+        err_ast_add(
+            "expected ':' to define type",
+            "add a ':' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // todo: return fail 
+        return null;
+    }
+
+    parser_advance(p);
+
+    AstSpan type_span = parse_type_span(p);
+
+    if (type_span.start_index == 0 && type_span.end_index == 0) {
+        err_ast_add(
+            "expected a valid type",
+            "add a valid type here",
+            parser_peek(p),
+            LOC_WHOLE_LINE,
+            p -> file_index
+        );
+
+        // todo: return fail 
+        return null;
+    }
+
+    node -> const_decl.type = type_span;
+
+    if (!parser_check(p, T_Eq)) {
+        err_ast_add(                
+            "expected '='",         
+            "add a '=' here, constants MUST be initialised",       
+            parser_peek_prev(p),    
+            LOC_END_OF_TOK,         
+            p -> file_index         
+        );                      
+
+        // todo: return fail
+        return null;
+    }
+
+    parser_advance(p);
+
+    AstNode* value = parse_expression(p);
+
+    if (!value) {
+        err_ast_add(                
+            "expected expression",         
+            "constants must be initialised",       
+            parser_peek_prev(p),    
+            LOC_WHOLE_LINE,         
+            p -> file_index         
+        );                      
+
+        // todo: return fail
+        return null;
+    }
+
+    node -> const_decl.value = value;
+
+    return node;
+}
+
 AstNode* parse_return(Parser* p) {
     AstNode* expr = parse_expression(p);
     return ast_make_return_node(expr);
+}
+
+AstNode* parse_defer(Parser* p) {
+    AstNode* expr = parse_expression(p);
+    return ast_make_defer_node(expr);
 }

@@ -312,7 +312,37 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
 
             ctx->has_more[ctx->depth - 1] = true;
             print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "Name: \"%.*s\"\n", (i32)node->function_decl.name_len, node->function_decl.name_ptr);
+            fprintf(
+                fd,
+                "Name: \"%.*s\"\n",
+                (i32) node->function_decl.ident->ident.len,
+                node->function_decl.ident->ident.ptr
+            );
+
+            if (node->function_decl.ident->ident.namespace_count > 0) {
+                ctx->has_more[ctx->depth - 1] = true;
+                print_tree_indent(fd, ctx, false, false);
+                fprintf(
+                    fd,
+                    "Namespace: "
+                );
+
+                for (u32 i = 0; i < node->function_decl.ident->ident.namespace_count; i++) {
+                    fprintf(
+                        fd,
+                        "%.*s",
+                        (i32) node->function_decl.ident->ident.namespaces[i].len,
+                        node->function_decl.ident->ident.namespaces[i].ptr
+                    );
+
+                    if (i != node->function_decl.ident->ident.namespace_count - 1) {
+                        fprintf(fd, "::");
+                    }
+                }
+
+                fprintf(fd, "\n");
+            }
+
 
             ctx->has_more[ctx->depth - 1] = true;
             print_tree_indent(fd, ctx, false, false);

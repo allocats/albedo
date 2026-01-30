@@ -11,6 +11,7 @@
     X(T_Import)     \
                     \
     X(T_Test)       \
+    X(T_Defer)      \
                     \
     X(T_Extern)     \
                     \

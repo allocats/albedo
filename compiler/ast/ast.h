@@ -32,6 +32,7 @@ AstNode* ast_make_tunion_node(void);
 AstNode* ast_make_match_node(void);
 AstNode* ast_make_block_node(void);
 AstNode* ast_make_return_node(AstNode* expr);
+AstNode* ast_make_defer_node(AstNode* stmt);
 AstNode* ast_make_fn_call_node(AstNode* ident);
 AstNode* ast_make_struct_init_node(void);
 
@@ -64,6 +65,8 @@ void ast_struct_generic_push(AstNode* node, Token* token);
 void ast_struct_field_push(AstNode* node, AstField field);
 
 void ast_block_stmt_push(AstNode* node, AstNode* stmt);
+
+void ast_ident_namespace_push(AstNode* node, Token* token);
 
 /*
 *   Debugging

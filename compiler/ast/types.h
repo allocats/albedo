@@ -138,8 +138,7 @@ typedef struct {
 } AstParam;
 
 typedef struct {
-    char* name_ptr;
-    usize name_len;
+    AstNode* ident;
 
     AstGenericParam* generics;
     u32 generic_count;
@@ -304,6 +303,10 @@ typedef struct {
 } AstAssign;
 
 typedef struct {
+    AstSegment* namespaces;
+    u32 namespace_count;
+    u32 namespace_capacity;
+
     char* ptr;
     usize len;
 } AstIdent;

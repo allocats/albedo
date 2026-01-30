@@ -86,13 +86,13 @@ AstNode* parse_primary(Parser* p) {
         }
 
         case T_Ident: {
-            parser_advance(p);
+            AstNode* node = parse_qualified_name(p, token);
             
             if (parser_check(p, T_LBrace)) {
                 // struct init
             }
 
-            return ast_make_ident_node(token);
+            return node;
         }
 
         case T_LParen: {

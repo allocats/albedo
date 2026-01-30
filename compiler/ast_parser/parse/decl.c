@@ -297,13 +297,13 @@ AstNode* parse_fn_decl(Parser* p) {
         }
     }
 
-    Token* name = parser_peek(p);
+    Token* first = parser_peek(p);
 
-    if (name -> kind != T_Ident) {
+    if (first -> kind != T_Ident) {
         err_ast_add(
             "expected identifier for function name",
             "add an identifier here",
-            name,
+            first,
             LOC_WHOLE_TOK,
             p -> file_index
         );
@@ -311,10 +311,7 @@ AstNode* parse_fn_decl(Parser* p) {
         return top_level_decl_parse_fail(p, node);
     }
 
-    node -> function_decl.name_ptr = name -> lexeme;
-    node -> function_decl.name_len = name -> length;
-
-    parser_advance(p);
+    node -> function_decl.ident = parse_qualified_name(p, first);
 
     if (!parser_check(p, T_LParen)) {
         err_ast_add(
@@ -483,7 +480,7 @@ AstNode* parse_struct_decl(Parser* p) {
         }
     }
 
-    node -> span.end = p -> cursor;
+    node -> span.end = p -> cursor - 1;
 
     parser_advance(p);
 

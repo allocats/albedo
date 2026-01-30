@@ -1,0 +1,5 @@
+fn main() {
+    let x: const i32* = alloc(sizeof(i32));
+
+    defer free(x);
+}

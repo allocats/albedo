@@ -13,10 +13,6 @@ AstSpan parse_type_span(Parser* p) {
         parser_advance(p);
     }
 
-    while (parser_check(p, T_Star)) {
-        parser_advance(p);
-    }
-
     if (!parser_check(p, T_Ident)) {
         err_ast_add(
             "expected identifier for type",
@@ -70,6 +66,10 @@ AstSpan parse_type_span(Parser* p) {
 
             parser_advance(p);
         }
+    }
+
+    while (parser_check(p, T_Star)) {
+        parser_advance(p);
     }
 
     while (parser_check(p, T_LBracket)) {

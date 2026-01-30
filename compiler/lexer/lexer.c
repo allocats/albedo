@@ -127,6 +127,15 @@ char* lex_word(char* cursor) {
             token -> kind = T_Ident;
         } break;
 
+        case 'd': {
+            if (matches("defer", start, length)) {
+                token -> kind = T_Defer;
+                break;
+            }
+
+            token -> kind = T_Ident;
+        } break;
+
         case 'e': {
             if (matches("else", start, length)) {
                 token -> kind = T_Else;
@@ -138,7 +147,7 @@ char* lex_word(char* cursor) {
                 break;
             }
 
-            if (matches("extern", start, length)) {
+            if (matches("external", start, length)) {
                 token -> kind = T_Extern;
                 break;
             }

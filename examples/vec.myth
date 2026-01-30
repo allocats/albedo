@@ -4,12 +4,12 @@ const GROWTH_FACTOR: f32 = 1.5;
 const DEFAULT_CAPACITY: usize = 32;
 
 struct Vec<T> {
-    items: *T;
+    items: T*;
     count: usize;
     capacity: usize;
 }
 
-fn<T> push(self: *Vec<T>, item: T) {
+fn<T> push(self: Vec<T>*, item: T) {
     if self -> count >= self -> capacity {
         self -> capacity *= GROWTH_FACTOR;
         self -> items = realloc(self -> items, sizeof(T) * self -> capacity);
@@ -19,15 +19,15 @@ fn<T> push(self: *Vec<T>, item: T) {
     self -> count += 1;
 }
 
-fn<T> get(self: const* Vec<T>, index: u32): T {
+fn<T> get(self: const Vec<T>*, index: u32): T {
     return self -> items[index];
 }
 
-fn<T> get_ref(self: const* Vec<T>, index: u32): *T {
+fn<T> get_ref(self: const Vec<T>*, index: u32): T* {
     return &self -> items[index];
 }
 
-fn<T> print_by_ptr(self: const* Vec<T>) {
+fn<T> print_by_ptr(self: const Vec<T>*) {
     for item: T in self -> items {
         println("%(item)");
     }

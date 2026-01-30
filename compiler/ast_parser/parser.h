@@ -22,6 +22,9 @@ bool is_unary_operator(TokenKind kind);
 // spans
 AstSpan parse_type_span(Parser* p); 
 
+// namespaces 
+AstNode* parse_qualified_name(Parser* p, Token* ident);
+
 // declarations
 AstNode* parse_module_decl(Parser* p);
 AstNode* parse_import_decl(Parser* p);
@@ -32,6 +35,8 @@ AstNode* parse_struct_decl(Parser* p);
 AstNode* parse_block(Parser* p) ;
 AstNode* parse_return(Parser* p); 
 AstNode* parse_var_decl(Parser* p);
+AstNode* parse_const_decl(Parser* p);
+AstNode* parse_defer(Parser* p); 
 
 // expressions
 AstNode* parse_expression(Parser* p);

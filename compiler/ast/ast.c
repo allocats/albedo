@@ -170,6 +170,17 @@ AstNode* ast_make_return_node(AstNode* expr) {
     return node;
 }
 
+AstNode* ast_make_defer_node(AstNode* stmt) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Defer;
+    node -> defer_stmt.stmt = stmt;
+
+    return node;
+}
+
 AstNode* ast_make_fn_call_node(AstNode* ident) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
@@ -251,8 +262,14 @@ AstNode* ast_make_ident_node(Token* token) {
 
     node -> kind = A_Ident;
 
-    node -> ident.ptr = token -> lexeme;
-    node -> ident.len = token -> length;
+    node -> ident.namespaces = arena_alloc(arena, sizeof(AstSegment) * IMPORT_DEFAULT_CAP); 
+    node -> ident.namespace_count = 0;
+    node -> ident.namespace_capacity = IMPORT_DEFAULT_CAP;
+
+    if (token) {
+        node -> ident.ptr = token -> lexeme;
+        node -> ident.len = token -> length;
+    }
 
     return node;
 }
@@ -488,4 +505,27 @@ void ast_block_stmt_push(AstNode* node, AstNode* stmt) {
     }
 
     node -> block.stmts[node -> block.stmt_count++] = stmt;
+}
+
+void ast_ident_namespace_push(AstNode* node, Token* token) {
+    if (node -> ident.namespace_count >= node -> ident.namespace_capacity) {
+        usize size = node -> ident.namespace_capacity * sizeof(AstSegment);
+
+        node -> ident.namespaces = arena_realloc(
+            albedo_ctx.arena,
+            node -> ident.namespaces,
+            size,
+            size * 2
+        );
+
+        node -> ident.namespace_capacity *= 2;
+    }
+
+    node -> ident.namespaces[node -> ident.namespace_count++] = (AstSegment) {
+        .len = token -> length,
+        .ptr = token -> lexeme
+    };
+
+    node -> ident.len = token -> length;
+    node -> ident.ptr = token -> lexeme;
 }
