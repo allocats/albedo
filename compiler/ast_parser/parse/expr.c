@@ -12,6 +12,8 @@ AstNode* parse_primary(Parser* p);
 AstNode* parse_prefix(Parser* p);
 AstNode* parse_postfix(Parser* p, AstNode* node); 
 
+AstNode* parse_struct_init(Parser* p, AstNode* ident);
+
 inline AstNode* parse_expression(Parser* p) {
     return parse_expr_prec(p, PREC_ASSIGNMENT);
 }
@@ -86,10 +88,11 @@ AstNode* parse_primary(Parser* p) {
         }
 
         case T_Ident: {
-            AstNode* node = parse_qualified_name(p, token);
+            AstNode* node = parse_qualified_name(p);
             
             if (parser_check(p, T_LBrace)) {
-                // struct init
+                parser_advance(p);
+                return parse_struct_init(p, node);
             }
 
             return node;
@@ -270,4 +273,108 @@ AstNode* parse_postfix(Parser* p, AstNode* node) {
     }
     
     return null;
+}
+
+AstNode* parse_struct_init(Parser* p, AstNode* ident) {
+    AstNode* node = ast_make_struct_init_node(ident);
+
+    while (!parser_check(p, T_RBrace)) {
+        if (!parser_check(p, T_Dot)) {
+            err_ast_add(
+                "expected '.'",
+                "add a '.' before a field",
+                parser_peek(p),
+                LOC_START_OF_TOK,
+                p -> file_index
+            );
+
+            // TODO: recover
+            return null;
+        }
+
+        parser_advance(p);
+
+        Token* field_name = parser_peek(p);
+
+        if (field_name -> kind != T_Ident) {
+            err_ast_add(
+                "expected identifier",
+                "add a valid identifier",
+                field_name,
+                LOC_WHOLE_TOK,
+                p -> file_index
+            );
+
+            // TODO: recover
+            return null;
+        }
+
+        parser_advance(p);
+
+        if (!parser_check(p, T_Eq)) {
+            err_ast_add(
+                "expected '='",
+                "add a '=' after a field",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            // TODO: recover
+            return null;
+        } 
+
+        parser_advance(p);
+
+        AstNode* field_value = parse_expression(p);
+
+        if (!field_value) {
+            // TODO
+            return null;
+        }
+
+        AstFieldInit field = {
+            .len = field_name -> length,
+            .ptr = field_name -> lexeme,
+            .value = field_value 
+        };
+
+        ast_struct_init_field_push(node, field);
+        
+        if (parser_check(p, T_Comma)) {
+            parser_advance(p);
+
+            if (parser_check(p, T_RBrace)) {
+                break;
+            }
+        } else if (!parser_check(p, T_RBrace)) {
+            err_ast_add(
+                "expected ',' or '}'",
+                "add a ',' between fields or '}' to end the initializer",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            // TODO: recover
+            return null;
+        }
+    }
+
+    if (!parser_check(p, T_RBrace)) {
+        err_ast_add(
+            "expected '}'",
+            "add a '}' to close the struct initializer",
+            parser_peek(p),
+            LOC_START_OF_TOK,
+            p -> file_index
+        );
+        
+        // TODO
+        return null;
+    }
+
+    parser_advance(p);
+
+    return node;
 }

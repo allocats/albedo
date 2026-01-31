@@ -7,8 +7,8 @@
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
 
-AstNode* parse_qualified_name(Parser* p, Token* ident) {
-    parser_advance(p);
+AstNode* parse_qualified_name(Parser* p) {
+    Token* ident = parser_advance(p);
 
     if (!parser_check(p, T_ColonColon)) {
         return ast_make_ident_node(ident);

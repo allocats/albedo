@@ -284,8 +284,8 @@ bool parse_params(Parser* p, AstNode* node) {
     return result;
 }
 
-AstNode* parse_fn_decl(Parser* p) {
-    AstNode* node = ast_make_fn_node(false);
+AstNode* parse_fn_decl(Parser* p, bool external) {
+    AstNode* node = ast_make_fn_node(external);
 
     node -> span.start = p -> cursor - 1;
 
@@ -311,7 +311,7 @@ AstNode* parse_fn_decl(Parser* p) {
         return top_level_decl_parse_fail(p, node);
     }
 
-    node -> function_decl.ident = parse_qualified_name(p, first);
+    node -> function_decl.ident = parse_qualified_name(p);
 
     if (!parser_check(p, T_LParen)) {
         err_ast_add(
@@ -334,6 +334,21 @@ AstNode* parse_fn_decl(Parser* p) {
         node -> function_decl.return_type = parse_type_span(p);
     }
 
+    if (external) {
+        if (!parser_check(p, T_Semi)) {
+            err_ast_add(
+                "expected ';'",
+                "add a ';' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+        }
+
+        node -> span.end = p -> cursor - 1;
+        return node;
+    }
+
     if (!parser_check(p, T_LBrace)) {
         err_ast_add(
             "expected '{'",
@@ -353,29 +368,13 @@ AstNode* parse_fn_decl(Parser* p) {
     return node;
 }
 
-AstNode* parse_struct_decl(Parser* p) {
-    AstNode* node = ast_make_struct_node(false);
+AstNode* parse_struct_decl(Parser* p, bool external) {
+    AstNode* node = ast_make_struct_node(external);
 
     node -> span.start = p -> cursor - 1;
 
-    Token* name = parser_peek(p);
-
-    if (name -> kind != T_Ident) {
-        err_ast_add(
-            "expected struct name",
-            "add a valid identifier here",
-            name,
-            LOC_WHOLE_TOK,
-            p -> file_index
-        );
-
-        return top_level_decl_parse_fail(p, node);
-    }
-
-    node -> struct_decl.name_ptr = name -> lexeme;
-    node -> struct_decl.name_len = name -> length;
-
-    parser_advance(p);
+    node -> struct_decl.is_extern = external;
+    node -> struct_decl.ident = parse_qualified_name(p);
 
     if (parser_check(p, T_Lt)) {
         parser_advance(p);
@@ -385,11 +384,26 @@ AstNode* parse_struct_decl(Parser* p) {
         }
     }
 
+    if (external) {
+        if (!parser_check(p, T_Semi)) {
+            err_ast_add(
+                "expected ';'",
+                "add a ';' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+        }
+
+        node -> span.end = p -> cursor - 1;
+        return node;
+    }
+
     if (!parser_check(p, T_LBrace)) {
         err_ast_add(
             "expected '{'",
             "add a '{' here",
-            name,
+            parser_peek_prev(p),
             LOC_END_OF_TOK,
             p -> file_index
         );
@@ -420,7 +434,7 @@ AstNode* parse_struct_decl(Parser* p) {
             err_ast_add(
                 "expected ':'",
                 "add a ':' here",
-                name,
+                field_name,
                 LOC_END_OF_TOK,
                 p -> file_index
             );
@@ -481,6 +495,113 @@ AstNode* parse_struct_decl(Parser* p) {
     }
 
     node -> span.end = p -> cursor - 1;
+
+    parser_advance(p);
+
+    return node;
+}
+
+AstNode* parse_enum_decl(Parser* p, bool external) {
+    AstNode* node = ast_make_enum_node(external);
+
+    AstNode* enum_name = parse_qualified_name(p);
+
+    node -> enum_decl.ident = enum_name;
+    node -> enum_decl.is_extern = external;
+
+    if (external) {
+        if (!parser_check(p, T_Semi)) {
+            err_ast_add(
+                "expected ';'",
+                "add a ';' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+        }
+
+        node -> span.end = p -> cursor - 1;
+        return node;
+    }
+
+    if (parser_check(p, T_Colon)) {
+        parser_advance(p);
+
+        AstSpan type = parse_type_span(p);
+
+        if (type.start_index == 0) {
+            // TODO
+        }
+
+        node -> enum_decl.type = type;
+    }
+
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    parser_advance(p);
+
+    while (!parser_check(p, T_RBrace)) {
+        AstNode* value = null;
+
+        Token* variant_name = parser_peek(p);
+
+        if (variant_name -> kind != T_Ident) {
+            err_ast_add(
+                "expected variant name",
+                "add a valid identifier here",
+                variant_name,
+                LOC_WHOLE_TOK,
+                p -> file_index
+            );
+
+            // TODO: recover
+        }
+
+        parser_advance(p);
+
+        if (parser_check(p, T_Eq)) {
+            parser_advance(p);
+
+            value = parse_expression(p);
+
+            if (!value) {
+                // TODO
+            }
+        }
+
+        if (!parser_check(p, T_Semi)) {
+            err_ast_add(
+                "expected ';'",
+                "add a ';' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            // TODO
+        }
+
+        parser_advance(p);
+
+        AstEnumVariant variant = {
+            .name_len = variant_name -> length,
+            .name_ptr = variant_name -> lexeme,
+            .value = value 
+        };
+
+        ast_enum_variant_push(node, variant);
+    }
 
     parser_advance(p);
 

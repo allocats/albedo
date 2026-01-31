@@ -1,7 +1,8 @@
 #include "parser.h"
 
 #include "../albedo/types.h"
-#include "../diagnostics/types.h"
+#include "../diagnostics/diagnostics.h"
+#include "../token/token.h"
 
 #include <assert.h>
 
@@ -30,12 +31,55 @@ void parse_tokens(void) {
                 node = parse_import_decl(&parser);
             } break;
 
+            case T_Extern: {
+                switch (parser_advance(&parser) -> kind) {
+                    case T_Fn: {
+                        node = parse_fn_decl(&parser, true);
+                    } break;
+
+                    case T_Struct: {
+                        node = parse_struct_decl(&parser, true);
+                    } break;
+
+                    case T_Enum: {
+                        node = parse_enum_decl(&parser, true);
+                    } break;
+
+                    default: {
+                        assert(0 > 1 && "PANIC");
+                    } break;
+                }
+            } break;
+
+
+            case T_Const: {
+                node = parse_const_decl(&parser);
+                
+                if (!parser_check(&parser, T_Semi)) {
+                    err_ast_add(
+                        "expected ';'",
+                        "add a ';' here",
+                        parser_peek_prev(&parser),
+                        LOC_END_OF_TOK,
+                        parser.file_index
+                    );
+
+                    node = null;
+                } else {
+                    parser_advance(&parser);
+                }
+            } break;
+
             case T_Struct: {
-                node = parse_struct_decl(&parser);
+                node = parse_struct_decl(&parser, false);
+            } break;
+
+            case T_Enum: {
+                node = parse_enum_decl(&parser, false);
             } break;
                            
             case T_Fn: {
-                node = parse_fn_decl(&parser);
+                node = parse_fn_decl(&parser, false);
             } break;
 
             case T_Ident: {

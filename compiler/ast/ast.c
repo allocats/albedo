@@ -14,31 +14,21 @@ AstNode* ast_make_fn_node(bool is_extern) {
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
-    if (is_extern) {
-        node -> kind = A_Function;
-        node -> extern_fn.params = arena_alloc(
-            arena,
-            sizeof(AstParam) * PARAM_DEFAULT_CAP
-        );
-        node -> extern_fn.param_count = 0;
-        node -> extern_fn.param_capacity = PARAM_DEFAULT_CAP;
-    } else {
-        node -> kind = A_Function;
-
-        node -> function_decl.generics = arena_alloc(
+    node -> kind = A_Function;
+    node -> function_decl.is_extern = is_extern;
+    node -> function_decl.generics = arena_alloc(
             arena,
             sizeof(AstGenericParam) * PARAM_DEFAULT_CAP
-        );
-        node -> function_decl.generic_count = 0;
-        node -> function_decl.generic_capacity = PARAM_DEFAULT_CAP;
+            );
+    node -> function_decl.generic_count = 0;
+    node -> function_decl.generic_capacity = PARAM_DEFAULT_CAP;
 
-        node -> function_decl.params = arena_alloc(
+    node -> function_decl.params = arena_alloc(
             arena,
             sizeof(AstParam) * PARAM_DEFAULT_CAP
-        );
-        node -> function_decl.param_count = 0;
-        node -> function_decl.param_capacity = PARAM_DEFAULT_CAP;
-    }
+            );
+    node -> function_decl.param_count = 0;
+    node -> function_decl.param_capacity = PARAM_DEFAULT_CAP;
 
     node -> function_decl.return_type = (AstSpan) {0};
 
@@ -50,41 +40,32 @@ AstNode* ast_make_struct_node(bool is_extern) {
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
-    if (is_extern) {
-        node -> kind = A_ExternStruct;
-        node -> extern_struct.fields = arena_alloc(
-            arena,
-            sizeof(AstField) * FIELD_DEFAULT_CAP
-        );
-        node -> extern_struct.field_count = 0;
-        node -> extern_struct.field_capacity = FIELD_DEFAULT_CAP;
-    } else {
-        node -> kind = A_Struct;
-
-        node -> struct_decl.generics = arena_alloc(
+    node -> kind = A_Struct;
+    node -> struct_decl.is_extern = is_extern;
+    node -> struct_decl.generics = arena_alloc(
             arena,
             sizeof(AstGenericParam) * FIELD_DEFAULT_CAP 
-        );
-        node -> struct_decl.generic_count = 0;
-        node -> struct_decl.generic_capacity = FIELD_DEFAULT_CAP;
+            );
+    node -> struct_decl.generic_count = 0;
+    node -> struct_decl.generic_capacity = FIELD_DEFAULT_CAP;
 
-        node -> struct_decl.fields = arena_alloc(
+    node -> struct_decl.fields = arena_alloc(
             arena,
             sizeof(AstField) * FIELD_DEFAULT_CAP
-        );
-        node -> struct_decl.field_count = 0;
-        node -> struct_decl.field_capacity = FIELD_DEFAULT_CAP;
-    }
+            );
+    node -> struct_decl.field_count = 0;
+    node -> struct_decl.field_capacity = FIELD_DEFAULT_CAP;
 
     return node;
 }
 
-AstNode* ast_make_enum_node(void) {
+AstNode* ast_make_enum_node(bool is_extern) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
     node -> kind = A_Enum;
+    node -> enum_decl.is_extern = is_extern;
     node -> enum_decl.variants = arena_alloc(
         arena,
         sizeof(AstEnumVariant) * ENUM_DEFAULT_CAP
@@ -123,6 +104,19 @@ AstNode* ast_make_tunion_node(void) {
     );
     node -> tunion_decl.variant_count = 0;
     node -> tunion_decl.variant_count = TUNION_DEFAULT_CAP;
+
+    return node;
+}
+
+AstNode* ast_make_if_node(void) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_If;
+    node -> if_stmt.branches = arena_alloc(arena, sizeof(AstIfBranch) * MATCH_DEFAULT_CAP);
+    node -> if_stmt.branch_count = 0; 
+    node -> if_stmt.branch_capacity = MATCH_DEFAULT_CAP; 
 
     return node;
 }
@@ -198,18 +192,59 @@ AstNode* ast_make_fn_call_node(AstNode* ident) {
     return node;
 }
 
-AstNode* ast_make_struct_init_node(void) {
+AstNode* ast_make_struct_init_node(AstNode* identifier) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
     node -> kind = A_StructInit;
+    node -> struct_init.ident = identifier;
     node -> struct_init.field_inits = arena_alloc(
         arena,
-        sizeof(AstNode*) * FIELD_DEFAULT_CAP
+        sizeof(AstFieldInit) * FIELD_DEFAULT_CAP
     );
     node -> struct_init.field_count = 0;
     node -> struct_init.field_capacity = FIELD_DEFAULT_CAP;
+
+    return node;
+}
+
+AstNode* ast_make_loop_node(AstNode* block) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_Loop;
+
+    node -> loop_loop.block = block; 
+
+    return node;
+}
+
+AstNode* ast_make_while_node(AstNode* condition, AstNode* block) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_While;
+
+    node -> while_loop.condition = condition; 
+    node -> while_loop.block = block; 
+
+    return node;
+}
+
+AstNode* ast_make_for_node(AstNode* iter, AstNode* condition, AstNode* step, AstNode* block) {
+    ArenaAllocator* arena = albedo_ctx.arena;
+
+    AstNode* node = arena_alloc(arena, sizeof(*node));
+
+    node -> kind = A_For;
+
+    node -> for_loop.iterator = iter; 
+    node -> for_loop.condition = condition; 
+    node -> for_loop.step = step; 
+    node -> for_loop.block = block; 
 
     return node;
 }
@@ -490,6 +525,39 @@ void ast_struct_field_push(AstNode* node, AstField field) {
     node -> struct_decl.fields[node -> struct_decl.field_count++] = field;
 }
 
+void ast_struct_init_field_push(AstNode* node, AstFieldInit field) {
+    if (node -> struct_init.field_count >= node -> struct_init.field_capacity) {
+        usize size = node -> struct_init.field_capacity * sizeof(AstFieldInit);
+
+        node -> struct_init.field_inits = arena_realloc(
+            albedo_ctx.arena,
+            node -> struct_init.field_inits,
+            size,
+            size * 2
+        );
+        node -> struct_init.field_capacity *= 2;
+    }
+
+    node -> struct_init.field_inits[node -> struct_init.field_count++] = field;
+}
+
+void ast_enum_variant_push(AstNode* node, AstEnumVariant variant) {
+    if (node -> enum_decl.variant_count >= node -> enum_decl.variant_capacity) {
+        usize size = node -> enum_decl.variant_capacity * sizeof(AstEnumVariant);
+
+        node -> enum_decl.variants = arena_realloc(
+            albedo_ctx.arena,
+            node -> enum_decl.variants,
+            size,
+            size * 2
+        );
+        node -> enum_decl.variant_capacity *= 2;
+    }
+
+    node -> enum_decl.variants[node -> enum_decl.variant_count++] = variant;
+}
+
+
 void ast_block_stmt_push(AstNode* node, AstNode* stmt) {
     if (node -> block.stmt_count >= node -> block.stmt_capacity) {
         usize size = node -> block.stmt_capacity * sizeof(AstNode*);
@@ -505,6 +573,26 @@ void ast_block_stmt_push(AstNode* node, AstNode* stmt) {
     }
 
     node -> block.stmts[node -> block.stmt_count++] = stmt;
+}
+
+void ast_if_branch_push(AstNode* node, AstNode* condition, AstNode* block) {
+    if (node -> if_stmt.branch_count >= node -> if_stmt.branch_capacity) {
+        usize size = node -> if_stmt.branch_capacity * sizeof(AstIfBranch);
+
+        node -> if_stmt.branches = arena_realloc(
+            albedo_ctx.arena,
+            node -> if_stmt.branches,
+            size,
+            size * 2
+        );
+
+        node -> if_stmt.branch_capacity *= 2;
+    }
+
+    node -> if_stmt.branches[node -> if_stmt.branch_count++] = (AstIfBranch) {
+        .condition = condition,
+        .block = block
+    };
 }
 
 void ast_ident_namespace_push(AstNode* node, Token* token) {

@@ -64,6 +64,29 @@ AstNode* parse_block(Parser* p) {
                 PARSE_STMT(parse_defer);
             } break;
 
+            case T_If: {
+                AstNode* stmt = parse_if_stmt(p);
+                ast_block_stmt_push(node, stmt);
+            } break;
+
+            case T_For: {
+                parser_advance(p);
+                AstNode* stmt = parse_for_loop(p);
+                ast_block_stmt_push(node, stmt);
+            } break;
+
+            case T_While: {
+                parser_advance(p);
+                AstNode* stmt = parse_while_loop(p);
+                ast_block_stmt_push(node, stmt);
+            } break;
+
+            case T_Loop: {
+                parser_advance(p);
+                AstNode* stmt = parse_loop_stmt(p);
+                ast_block_stmt_push(node, stmt);
+            } break;
+
             case T_Ident: {
                 AstNode* stmt = parse_expression(p);
                 
@@ -174,8 +197,6 @@ AstNode* parse_const_decl(Parser* p) {
 
     node -> kind = A_Const;
 
-    parser_advance(p);
-
     Token* name = parser_peek(p);
 
     if (name -> kind != T_Ident) {
@@ -271,4 +292,193 @@ AstNode* parse_return(Parser* p) {
 AstNode* parse_defer(Parser* p) {
     AstNode* expr = parse_expression(p);
     return ast_make_defer_node(expr);
+}
+
+AstNode* parse_if_stmt(Parser* p) {
+    AstNode* node = ast_make_if_node();
+
+    Token* if_kw = parser_advance(p);
+
+    AstNode* condition = parse_expression(p);
+
+    if (!condition) {
+        err_ast_add(
+            "expected expression",
+            "add an expression",
+            if_kw,
+            LOC_WHOLE_LINE,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{'",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    AstNode* block = parse_block(p);
+
+    ast_if_branch_push(node, condition, block);
+
+    while (parser_check(p, T_Else)) {
+        parser_advance(p);
+
+        if (parser_check(p, T_LBrace)) {
+            if (node -> if_stmt.else_block != null) {
+                // TODO: error handling
+                return null;
+            }
+
+            node -> if_stmt.else_block = parse_block(p);
+
+            return node;
+        }
+
+        if (!parser_check(p, T_If)) {
+            err_ast_add(
+                "expected 'if' or '{'",
+                "add a 'if' or '{' here",
+                parser_peek_prev(p),
+                LOC_END_OF_TOK,
+                p -> file_index
+            );
+
+            return null;
+        }
+        
+        parser_advance(p);
+
+        AstNode* branch_condition = parse_expression(p);
+        
+        if (!parser_check(p, T_LBrace)) {
+            // TODO: error handling
+            return null;
+        }
+        
+        AstNode* branch_block = parse_block(p);
+
+        ast_if_branch_push(node, branch_condition, branch_block);
+    }
+
+    return node;
+}
+
+AstNode* parse_loop_stmt(Parser* p) {
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    AstNode* block = parse_block(p);
+
+    return ast_make_loop_node(block);
+}
+
+AstNode* parse_while_loop(Parser* p) {
+    AstNode* condition = parse_expression(p);
+
+    if (!condition) {
+        // TODO
+    }
+
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    AstNode* block = parse_block(p);
+
+    return ast_make_while_node(condition, block);
+}
+
+AstNode* parse_for_loop(Parser* p) {
+    AstNode* iterator = parse_var_decl(p);
+
+    if (!parser_check(p, T_Semi)) {
+        err_ast_add(
+            "expected ';'",
+            "add a ';' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    parser_advance(p);
+
+    AstNode* condition = parse_expression(p);
+
+    if (!condition) {
+        // TODO
+        return null;
+    }
+
+    if (!parser_check(p, T_Semi)) {
+        err_ast_add(
+            "expected ';'",
+            "add a ';' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    parser_advance(p);
+
+    AstNode* step = parse_expression(p);
+
+    if (!step) {
+        // TODO
+        return null;
+    }
+
+    if (!parser_check(p, T_LBrace)) {
+        err_ast_add(
+            "expected '{'",
+            "add a '{' here",
+            parser_peek_prev(p),
+            LOC_END_OF_TOK,
+            p -> file_index
+        );
+
+        // TODO
+        return null;
+    }
+
+    AstNode* block = parse_block(p);
+
+    return ast_make_for_node(iterator, condition, step, block);
 }

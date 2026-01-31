@@ -26,15 +26,20 @@
 */
 AstNode* ast_make_fn_node(bool is_extern);
 AstNode* ast_make_struct_node(bool is_extern);
-AstNode* ast_make_enum_node(void);
+AstNode* ast_make_enum_node(bool is_extern);
 AstNode* ast_make_union_node(void);
 AstNode* ast_make_tunion_node(void);
+AstNode* ast_make_if_node(void);
 AstNode* ast_make_match_node(void);
 AstNode* ast_make_block_node(void);
 AstNode* ast_make_return_node(AstNode* expr);
 AstNode* ast_make_defer_node(AstNode* stmt);
 AstNode* ast_make_fn_call_node(AstNode* ident);
-AstNode* ast_make_struct_init_node(void);
+AstNode* ast_make_struct_init_node(AstNode* identifier);
+
+AstNode* ast_make_loop_node(AstNode* block);
+AstNode* ast_make_while_node(AstNode* condition, AstNode* block);
+AstNode* ast_make_for_node(AstNode* iter, AstNode* condition, AstNode* step, AstNode* block);
 
 AstNode* ast_make_index_node(AstNode* ident, AstNode* index);
 AstNode* ast_make_member_access_node(AstNode* ident, Token* field);
@@ -63,8 +68,12 @@ void ast_fn_call_arg_push(AstNode* node, AstNode* arg);
 
 void ast_struct_generic_push(AstNode* node, Token* token);
 void ast_struct_field_push(AstNode* node, AstField field);
+void ast_struct_init_field_push(AstNode* node, AstFieldInit field);
+
+void ast_enum_variant_push(AstNode* node, AstEnumVariant variant);
 
 void ast_block_stmt_push(AstNode* node, AstNode* stmt);
+void ast_if_branch_push(AstNode* node, AstNode* condition, AstNode* block);
 
 void ast_ident_namespace_push(AstNode* node, Token* token);
 

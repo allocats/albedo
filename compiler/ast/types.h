@@ -13,10 +13,6 @@ typedef struct AstNode AstNode;
     X(A_Module)         \
     X(A_Import)         \
                         \
-    X(A_ExternFn)       \
-    X(A_ExternStruct)   \
-    X(A_ExternType)     \
-                        \
     X(A_Function)       \
     X(A_Struct)         \
     X(A_Enum)           \
@@ -138,6 +134,9 @@ typedef struct {
 } AstParam;
 
 typedef struct {
+    bool is_extern;
+    bool has_variadic;
+
     AstNode* ident;
 
     AstGenericParam* generics;
@@ -164,8 +163,9 @@ typedef struct {
 } AstField;
 
 typedef struct {
-    char* name_ptr;
-    usize name_len;
+    bool is_extern;
+    
+    AstNode* ident;
 
     AstGenericParam* generics;
     u32 generic_count;
@@ -190,12 +190,13 @@ typedef struct {
 } AstEnumVariant;
 
 typedef struct {
-    char* name_ptr;
-    usize name_len;
+    bool is_extern;
+
+    AstNode* ident;
 
     // This is optional, it can only be integers, both signed 
     // and unsigned, BUT if this is not included in the source code 
-    // then enums are as signed 32 bit integers.
+    // then enum will default to signed 32 bit integer
     AstSpan type;
 
     AstEnumVariant* variants;
@@ -248,42 +249,6 @@ typedef struct {
     u32 variant_count;
     u32 variant_capacity;
 } AstTunion;
-
-typedef struct {
-    char* abi_ptr;
-    usize abi_len;
-
-    char* name_ptr;
-    usize name_len;
-
-    AstParam* params;
-    u32 param_count;
-    u32 param_capacity;
-
-    AstSpan return_type;
-
-    bool is_variadic;
-} AstExternFn;
-
-typedef struct {
-    char* abi_ptr;
-    usize abi_len;
-
-    char* name_ptr;
-    usize name_len;
-
-    AstField* fields;
-    u32 field_count;
-    u32 field_capacity;
-} AstExternStruct;
-
-typedef struct {
-    char* abi_ptr;
-    usize abi_len;
-
-    char* name_ptr;
-    usize name_len;
-} AstExternType;
 
 typedef struct {
     TokenKind op;
@@ -428,10 +393,10 @@ typedef struct {
 } AstLoop;
 
 typedef struct {
-    char* var_ptr;
-    usize var_len;
-
+    // Points to AstVarDecl 
     AstNode* iterator;
+    AstNode* condition;
+    AstNode* step;
 
     AstNode* block;
 } AstFor;
@@ -479,10 +444,6 @@ typedef struct AstNode {
         AstModule module_decl;
 
         AstTest test_decl;
-
-        AstExternFn extern_fn;
-        AstExternStruct extern_struct;
-        AstExternType extern_type;
 
         AstFunction function_decl;
         AstStruct struct_decl;

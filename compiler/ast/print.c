@@ -156,155 +156,11 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
             break;
         }
 
-        case A_ExternFn: {
-            print_tree_indent(fd, ctx, is_last, false);
-            fprintf(fd, "ExternFn :: [%zu .. %zu]\n", node->span.start, node->span.end);
-
-            ctx->depth++;
-            ensure_context_capacity(ctx);
-
-            u32 item_count = 4 + (node->extern_fn.is_variadic ? 1 : 0);
-            u32 current_item = 0;
-
-            ctx->has_more[ctx->depth - 1] = (current_item < item_count - 1);
-            print_tree_indent(fd, ctx, current_item == item_count - 1, false);
-            fprintf(fd, "ABI: \"%.*s\"\n", (i32)node->extern_fn.abi_len, node->extern_fn.abi_ptr);
-            current_item++;
-
-            ctx->has_more[ctx->depth - 1] = (current_item < item_count - 1);
-            print_tree_indent(fd, ctx, current_item == item_count - 1, false);
-            fprintf(fd, "Name: \"%.*s\"\n", (i32)node->extern_fn.name_len, node->extern_fn.name_ptr);
-            current_item++;
-
-            ctx->has_more[ctx->depth - 1] = (current_item < item_count - 1);
-            print_tree_indent(fd, ctx, current_item == item_count - 1, false);
-            fprintf(fd, "Return Type Span :: [%u .. %u] -> ", 
-                    node->extern_fn.return_type.start_index, node->extern_fn.return_type.end_index);
-            if (node->extern_fn.return_type.start_index != 0) {
-                print_span(fd, tokens, node->extern_fn.return_type);
-            } else {
-                fprintf(fd, "void");
-            }
-            fprintf(fd, "\n");
-            current_item++;
-
-            ctx->has_more[ctx->depth - 1] = (current_item < item_count - 1);
-            print_tree_indent(fd, ctx, current_item == item_count - 1, false);
-            fprintf(fd, "Parameters [%u/%u]\n", node->extern_fn.param_count, node->extern_fn.param_capacity);
-            
-            if (node->extern_fn.param_count > 0) {
-                ctx->depth++;
-                ensure_context_capacity(ctx);
-                for (u32 i = 0; i < node->extern_fn.param_count; i++) {
-                    ctx->has_more[ctx->depth - 1] = (i < node->extern_fn.param_count - 1);
-                    print_tree_indent(fd, ctx, i == node->extern_fn.param_count - 1, false);
-                    fprintf(fd, "%u. %.*s: ", i, (i32)node->extern_fn.params[i].name_len, node->extern_fn.params[i].name_ptr);
-                    print_span(fd, tokens, node->extern_fn.params[i].type);
-                    fprintf(fd, "\n");
-                }
-                ctx->depth--;
-            }
-            current_item++;
-
-            if (node->extern_fn.is_variadic) {
-                ctx->has_more[ctx->depth - 1] = false;
-                print_tree_indent(fd, ctx, true, false);
-                fprintf(fd, "Variadic: true\n");
-            }
-
-            ctx->depth--;
-            break;
-        }
-
-        case A_ExternStruct: {
-            print_tree_indent(fd, ctx, is_last, false);
-            fprintf(fd, "ExternStruct :: [%zu .. %zu]\n", node->span.start, node->span.end);
-
-            ctx->depth++;
-            ensure_context_capacity(ctx);
-
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "ABI: \"%.*s\"\n", (i32)node->extern_struct.abi_len, node->extern_struct.abi_ptr);
-
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "Name: \"%.*s\"\n", (i32)node->extern_struct.name_len, node->extern_struct.name_ptr);
-
-            ctx->has_more[ctx->depth - 1] = false;
-            print_tree_indent(fd, ctx, true, false);
-            fprintf(fd, "Fields [%u/%u]\n", node->extern_struct.field_count, node->extern_struct.field_capacity);
-
-            if (node->extern_struct.field_count > 0) {
-                ctx->depth++;
-                ensure_context_capacity(ctx);
-                for (u32 i = 0; i < node->extern_struct.field_count; i++) {
-                    AstField* field = &node->extern_struct.fields[i];
-                    bool is_last_field = (i == node->extern_struct.field_count - 1);
-                    ctx->has_more[ctx->depth - 1] = !is_last_field;
-
-                    print_tree_indent(fd, ctx, is_last_field, false);
-                    fprintf(fd, "%u. %.*s", i, (i32)field->name_len, field->name_ptr);
-
-                    fprintf(fd, ": ");
-                    print_span(fd, tokens, field->type_span);
-                    fprintf(fd, "\n");
-
-                    // if (field->kind == FieldBasic) {
-                    //     fprintf(fd, ": ");
-                    //     print_span(fd, tokens, field->basic_type);
-                    //     fprintf(fd, "\n");
-                    // } else {
-                    //     fprintf(fd, "\n");
-                    //     ctx->depth++;
-                    //     ensure_context_capacity(ctx);
-                    //     ctx->has_more[ctx->depth - 1] = (field->default_value != nullptr);
-                    //
-                    //     if (field->kind == FieldStruct) {
-                    //         print_node_tree(fd, field->struct_decl, tokens, ctx, field->default_value == nullptr);
-                    //     } else if (field->kind == FieldUnion) {
-                    //         print_node_tree(fd, field->union_decl, tokens, ctx, field->default_value == nullptr);
-                    //     }
-                    //
-                    //     if (field->default_value != nullptr) {
-                    //         ctx->has_more[ctx->depth - 1] = false;
-                    //         print_tree_indent(fd, ctx, true, false);
-                    //         fprintf(fd, "Default Value:\n");
-                    //         ctx->depth++;
-                    //         print_node_tree(fd, field->default_value, tokens, ctx, true);
-                    //         ctx->depth--;
-                    //     }
-                    //     ctx->depth--;
-                    // }
-                }
-                ctx->depth--;
-            }
-
-            ctx->depth--;
-            break;
-        }
-
-        case A_ExternType: {
-            print_tree_indent(fd, ctx, is_last, false);
-            fprintf(fd, "ExternType :: [%zu .. %zu]\n", node->span.start, node->span.end);
-
-            ctx->depth++;
-            ensure_context_capacity(ctx);
-
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "ABI: \"%.*s\"\n", (i32)node->extern_type.abi_len, node->extern_type.abi_ptr);
-
-            ctx->has_more[ctx->depth - 1] = false;
-            print_tree_indent(fd, ctx, true, false);
-            fprintf(fd, "Name: \"%.*s\"\n", (i32)node->extern_type.name_len, node->extern_type.name_ptr);
-
-            ctx->depth--;
-            break;
-        }
-
         case A_Function: {
             print_tree_indent(fd, ctx, is_last, false);
+            if (node->function_decl.is_extern) {
+                fprintf(fd,"External "); 
+            }
             fprintf(fd, "Function :: [%zu .. %zu]\n", node->span.start, node->span.end);
 
             ctx->depth++;
@@ -327,7 +183,7 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                     "Namespace: "
                 );
 
-                for (u32 i = 0; i < node->function_decl.ident->ident.namespace_count; i++) {
+                for (u32 i = 0; i < node->function_decl.ident->ident.namespace_count - 1; i++) {
                     fprintf(
                         fd,
                         "%.*s",
@@ -335,7 +191,7 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                         node->function_decl.ident->ident.namespaces[i].ptr
                     );
 
-                    if (i != node->function_decl.ident->ident.namespace_count - 1) {
+                    if (i != node->function_decl.ident->ident.namespace_count - 2) {
                         fprintf(fd, "::");
                     }
                 }
@@ -402,14 +258,15 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
 
         case A_Struct: {
             print_tree_indent(fd, ctx, is_last, false);
+            if (node->struct_decl.is_extern) {
+                fprintf(fd,"External "); 
+            }
             fprintf(fd, "Struct :: [%zu .. %zu]\n", node->span.start, node->span.end);
 
             ctx->depth++;
             ensure_context_capacity(ctx);
 
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "Name: \"%.*s\"\n", (i32)node->struct_decl.name_len, node->struct_decl.name_ptr);
+            print_node_tree(fd, node->struct_decl.ident, tokens, ctx, is_last);
 
             ctx->has_more[ctx->depth - 1] = true;
             print_tree_indent(fd, ctx, false, false);
@@ -497,14 +354,15 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
 
         case A_Enum: {
             print_tree_indent(fd, ctx, is_last, false);
+            if (node->enum_decl.is_extern) {
+                fprintf(fd,"External "); 
+            }
             fprintf(fd, "Enum :: [%zu .. %zu]\n", node->span.start, node->span.end);
 
             ctx->depth++;
             ensure_context_capacity(ctx);
 
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "Name: \"%.*s\"\n", (i32)node->enum_decl.name_len, node->enum_decl.name_ptr);
+            print_node_tree(fd, node -> enum_decl.ident, tokens, ctx, false);
 
             ctx->has_more[ctx->depth - 1] = true;
             print_tree_indent(fd, ctx, false, false);
@@ -1084,13 +942,23 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
 
             ctx->has_more[ctx->depth - 1] = true;
             print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "Variable: \"%.*s\"\n", (i32)node->for_loop.var_len, node->for_loop.var_ptr);
-
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
             fprintf(fd, "Iterator:\n");
             ctx->depth++;
             print_node_tree(fd, node->for_loop.iterator, tokens, ctx, true);
+            ctx->depth--;
+
+            ctx->has_more[ctx->depth - 1] = true;
+            print_tree_indent(fd, ctx, false, false);
+            fprintf(fd, "Condition:\n");
+            ctx->depth++;
+            print_node_tree(fd, node->for_loop.condition, tokens, ctx, true);
+            ctx->depth--;
+
+            ctx->has_more[ctx->depth - 1] = true;
+            print_tree_indent(fd, ctx, false, false);
+            fprintf(fd, "Step:\n");
+            ctx->depth++;
+            print_node_tree(fd, node->for_loop.step, tokens, ctx, true);
             ctx->depth--;
 
             ctx->has_more[ctx->depth - 1] = false;
@@ -1216,6 +1084,30 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
         }
 
         case A_Ident: {
+            if (node->ident.namespace_count > 0) {
+                ctx->has_more[ctx->depth - 1] = true;
+                print_tree_indent(fd, ctx, false, false);
+                fprintf(
+                    fd,
+                    "Namespace: "
+                );
+
+                for (u32 i = 0; i < node->ident.namespace_count - 1; i++) {
+                    fprintf(
+                        fd,
+                        "%.*s",
+                        (i32) node->ident.namespaces[i].len,
+                        node->ident.namespaces[i].ptr
+                    );
+
+                    if (i != node->ident.namespace_count - 2) {
+                        fprintf(fd, "::");
+                    }
+                }
+
+                fprintf(fd, "\n");
+            }
+
             print_tree_indent(fd, ctx, is_last, false);
             fprintf(fd, "Ident :: [%zu .. %zu] -> \"%.*s\"\n", 
                     node->span.start, node->span.end, (i32)node->ident.len, node->ident.ptr);

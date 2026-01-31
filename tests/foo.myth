@@ -1,11 +1,1 @@
-fn main(argc: i32, argv: string[]) {
-    let x: i32 = argc;
-    let y: string[] = argv;
-
-    let apple: Apple* = alloc(sizeof(*apple));
-    defer free(apple);
-
-    io::print("foo\n");
-
-    return 0;
-}
+fn main() {}

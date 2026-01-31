@@ -61,6 +61,7 @@ i32 main(i32 argc, char* argv[]) {
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();
         buffer_cleanup();
+
         fprintf(
             stderr,
             "compilation %s%sfailed%s due to %s%s%u%s errors\n",
@@ -72,6 +73,7 @@ i32 main(i32 argc, char* argv[]) {
             albedo_ctx.error_count,
             ANSI_RESET
         );
+
         return 1;
     }
 

@@ -54,5 +54,5 @@ test "temp" {
     print_by_ptr(&vec);
     print_by_copy(vec);
 
-    let x: *i32 = get_ref(const &vec, 0);
+    let x: i32* = get_ref(&vec, 0);
 }
