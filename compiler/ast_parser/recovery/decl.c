@@ -37,3 +37,23 @@ void recover_fn_param_decl(Parser* p) {
         parser_advance(p);
     }
 }
+
+void recover_enum_variant(Parser* p) {
+    while (p -> cursor < p -> count) {
+        TokenKind kind = parser_peek(p) -> kind;
+        
+        if (kind == T_Semi) {
+            parser_advance(p);
+            return;
+        }
+
+        if (
+            kind == T_Eof       ||
+            kind == T_RBrace
+        ) {
+            return;
+        }
+
+        parser_advance(p);
+    }
+}

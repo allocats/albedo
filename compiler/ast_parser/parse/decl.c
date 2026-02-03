@@ -530,7 +530,15 @@ AstNode* parse_enum_decl(Parser* p, bool external) {
         AstSpan type = parse_type_span(p);
 
         if (type.start_index == 0) {
-            // TODO
+            err_ast_add(
+                "expected type",
+                "add a valid type here, integers only",
+                parser_peek_prev(p),
+                LOC_WHOLE_LINE,
+                p -> file_index
+            );
+
+            return top_level_decl_parse_fail(p, node);
         }
 
         node -> enum_decl.type = type;
@@ -545,8 +553,7 @@ AstNode* parse_enum_decl(Parser* p, bool external) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        return top_level_decl_parse_fail(p, node);
     }
 
     parser_advance(p);
@@ -565,7 +572,8 @@ AstNode* parse_enum_decl(Parser* p, bool external) {
                 p -> file_index
             );
 
-            // TODO: recover
+            recover_enum_variant(p);
+            continue;
         }
 
         parser_advance(p);
@@ -576,7 +584,16 @@ AstNode* parse_enum_decl(Parser* p, bool external) {
             value = parse_expression(p);
 
             if (!value) {
-                // TODO
+                err_ast_add(
+                    "invalid expression",
+                    null,
+                    parser_peek_prev(p),
+                    LOC_WHOLE_LINE,
+                    p -> file_index
+                );
+
+                recover_enum_variant(p);
+                continue;
             }
         }
 
@@ -589,7 +606,8 @@ AstNode* parse_enum_decl(Parser* p, bool external) {
                 p -> file_index
             );
 
-            // TODO
+            recover_enum_variant(p);
+            continue;
         }
 
         parser_advance(p);

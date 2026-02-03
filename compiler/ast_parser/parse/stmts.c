@@ -135,8 +135,7 @@ AstNode* parse_var_decl(Parser* p) {
             p -> file_index
         );
 
-        // todo: return fail 
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     node -> var_decl.name_ptr = name -> lexeme;
@@ -154,8 +153,7 @@ AstNode* parse_var_decl(Parser* p) {
             p -> file_index
         );
 
-        // todo: return fail 
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     parser_advance(p);
@@ -171,8 +169,7 @@ AstNode* parse_var_decl(Parser* p) {
             p -> file_index
         );
 
-        // todo: return fail 
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     node -> var_decl.type = type_span;
@@ -208,8 +205,7 @@ AstNode* parse_const_decl(Parser* p) {
             p -> file_index
         );
 
-        // todo: return fail 
-        return null;
+        return stmt_parse_fail(p, node);
     } 
 
     node -> const_decl.name_len = name -> length;
@@ -226,8 +222,7 @@ AstNode* parse_const_decl(Parser* p) {
             p -> file_index
         );
 
-        // todo: return fail 
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     parser_advance(p);
@@ -243,8 +238,7 @@ AstNode* parse_const_decl(Parser* p) {
             p -> file_index
         );
 
-        // todo: return fail 
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     node -> const_decl.type = type_span;
@@ -258,8 +252,7 @@ AstNode* parse_const_decl(Parser* p) {
             p -> file_index         
         );                      
 
-        // todo: return fail
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     parser_advance(p);
@@ -275,8 +268,7 @@ AstNode* parse_const_decl(Parser* p) {
             p -> file_index         
         );                      
 
-        // todo: return fail
-        return null;
+        return stmt_parse_fail(p, node);
     }
 
     node -> const_decl.value = value;
@@ -310,8 +302,7 @@ AstNode* parse_if_stmt(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        recover_control_stmt_condition(p);
     }
 
     if (!parser_check(p, T_LBrace)) {
@@ -323,8 +314,7 @@ AstNode* parse_if_stmt(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        return control_stmt_parse_fail(p, node);
     }
 
     AstNode* block = parse_block(p);
@@ -336,8 +326,15 @@ AstNode* parse_if_stmt(Parser* p) {
 
         if (parser_check(p, T_LBrace)) {
             if (node -> if_stmt.else_block != null) {
-                // TODO: error handling
-                return null;
+                err_ast_add(
+                    "else block already defined",
+                    "did you mean else if?",
+                    parser_peek_prev(p),
+                    LOC_WHOLE_TOK,
+                    p -> file_index
+                );
+
+                return control_stmt_parse_fail(p, node);
             }
 
             node -> if_stmt.else_block = parse_block(p);
@@ -362,8 +359,15 @@ AstNode* parse_if_stmt(Parser* p) {
         AstNode* branch_condition = parse_expression(p);
         
         if (!parser_check(p, T_LBrace)) {
-            // TODO: error handling
-            return null;
+            err_ast_add(
+                    "expected '{'",
+                    "add a '{'",
+                    parser_peek_prev(p),
+                    LOC_END_OF_TOK,
+                    p -> file_index
+                    );
+
+            return control_stmt_parse_fail(p, node);
         }
         
         AstNode* branch_block = parse_block(p);
@@ -375,6 +379,8 @@ AstNode* parse_if_stmt(Parser* p) {
 }
 
 AstNode* parse_loop_stmt(Parser* p) {
+    AstNode* node = ast_make_loop_node();
+
     if (!parser_check(p, T_LBrace)) {
         err_ast_add(
             "expected '{'",
@@ -384,20 +390,23 @@ AstNode* parse_loop_stmt(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        return control_stmt_parse_fail(p, node);
     }
 
     AstNode* block = parse_block(p);
 
-    return ast_make_loop_node(block);
+    node -> loop_loop.block = block;
+
+    return node;
 }
 
 AstNode* parse_while_loop(Parser* p) {
+    AstNode* node = ast_make_while_node();
+
     AstNode* condition = parse_expression(p);
 
     if (!condition) {
-        // TODO
+        recover_control_stmt_condition(p);
     }
 
     if (!parser_check(p, T_LBrace)) {
@@ -409,16 +418,20 @@ AstNode* parse_while_loop(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        return control_stmt_parse_fail(p, node);
     }
 
     AstNode* block = parse_block(p);
 
-    return ast_make_while_node(condition, block);
+    node -> while_loop.condition = condition;
+    node -> while_loop.block = block;
+
+    return node;
 }
 
 AstNode* parse_for_loop(Parser* p) {
+    AstNode* node = ast_make_for_node();
+
     AstNode* iterator = parse_var_decl(p);
 
     if (!parser_check(p, T_Semi)) {
@@ -430,8 +443,8 @@ AstNode* parse_for_loop(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        // TODO: Add a nice recovery to block
+        return control_stmt_parse_fail(p, node);
     }
 
     parser_advance(p);
@@ -439,8 +452,8 @@ AstNode* parse_for_loop(Parser* p) {
     AstNode* condition = parse_expression(p);
 
     if (!condition) {
-        // TODO
-        return null;
+        // TODO: Add a nice recovery to block
+        return control_stmt_parse_fail(p, node);
     }
 
     if (!parser_check(p, T_Semi)) {
@@ -452,8 +465,8 @@ AstNode* parse_for_loop(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        // TODO: Add a nice recovery to block
+        return control_stmt_parse_fail(p, node);
     }
 
     parser_advance(p);
@@ -461,8 +474,8 @@ AstNode* parse_for_loop(Parser* p) {
     AstNode* step = parse_expression(p);
 
     if (!step) {
-        // TODO
-        return null;
+        // TODO: Add a nice recovery to block
+        return control_stmt_parse_fail(p, node);
     }
 
     if (!parser_check(p, T_LBrace)) {
@@ -474,11 +487,15 @@ AstNode* parse_for_loop(Parser* p) {
             p -> file_index
         );
 
-        // TODO
-        return null;
+        return control_stmt_parse_fail(p, node);
     }
 
     AstNode* block = parse_block(p);
 
-    return ast_make_for_node(iterator, condition, step, block);
+    node -> for_loop.iterator = iterator;
+    node -> for_loop.condition = condition;
+    node -> for_loop.step = step;
+    node -> for_loop.block = block;
+
+    return node;
 }

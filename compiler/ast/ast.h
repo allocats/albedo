@@ -37,9 +37,9 @@ AstNode* ast_make_defer_node(AstNode* stmt);
 AstNode* ast_make_fn_call_node(AstNode* ident);
 AstNode* ast_make_struct_init_node(AstNode* identifier);
 
-AstNode* ast_make_loop_node(AstNode* block);
-AstNode* ast_make_while_node(AstNode* condition, AstNode* block);
-AstNode* ast_make_for_node(AstNode* iter, AstNode* condition, AstNode* step, AstNode* block);
+AstNode* ast_make_loop_node(void);
+AstNode* ast_make_while_node(void);
+AstNode* ast_make_for_node(void);
 
 AstNode* ast_make_index_node(AstNode* ident, AstNode* index);
 AstNode* ast_make_member_access_node(AstNode* ident, Token* field);

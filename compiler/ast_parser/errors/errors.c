@@ -11,3 +11,9 @@ AstNode* stmt_parse_fail(Parser* p, AstNode* node) {
     recover_stmt(p);
     return node;
 }
+
+AstNode* control_stmt_parse_fail(Parser* p, AstNode* node) {
+    node -> kind = A_ParseError;
+    recover_control_stmt(p);
+    return node;
+}

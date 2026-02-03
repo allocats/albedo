@@ -278,6 +278,8 @@ AstNode* parse_postfix(Parser* p, AstNode* node) {
 AstNode* parse_struct_init(Parser* p, AstNode* ident) {
     AstNode* node = ast_make_struct_init_node(ident);
 
+    node -> span.start = p -> cursor - 2;
+
     while (!parser_check(p, T_RBrace)) {
         if (!parser_check(p, T_Dot)) {
             err_ast_add(
@@ -288,8 +290,8 @@ AstNode* parse_struct_init(Parser* p, AstNode* ident) {
                 p -> file_index
             );
 
-            // TODO: recover
-            return null;
+            recover_struct_init(p);
+            continue;
         }
 
         parser_advance(p);
@@ -305,8 +307,8 @@ AstNode* parse_struct_init(Parser* p, AstNode* ident) {
                 p -> file_index
             );
 
-            // TODO: recover
-            return null;
+            recover_struct_init(p);
+            continue;
         }
 
         parser_advance(p);
@@ -320,8 +322,8 @@ AstNode* parse_struct_init(Parser* p, AstNode* ident) {
                 p -> file_index
             );
 
-            // TODO: recover
-            return null;
+            recover_struct_init(p);
+            continue;
         } 
 
         parser_advance(p);
@@ -329,8 +331,8 @@ AstNode* parse_struct_init(Parser* p, AstNode* ident) {
         AstNode* field_value = parse_expression(p);
 
         if (!field_value) {
-            // TODO
-            return null;
+            recover_struct_init(p);
+            continue;
         }
 
         AstFieldInit field = {
@@ -356,8 +358,8 @@ AstNode* parse_struct_init(Parser* p, AstNode* ident) {
                 p -> file_index
             );
 
-            // TODO: recover
-            return null;
+            recover_struct_init(p);
+            continue;
         }
     }
 
@@ -370,11 +372,17 @@ AstNode* parse_struct_init(Parser* p, AstNode* ident) {
             p -> file_index
         );
         
-        // TODO
-        return null;
+        recover_struct_init(p);
+
+        if (parser_check(p, T_Semi)) {
+            parser_advance(p);
+            return node;
+        }
     }
 
     parser_advance(p);
+
+    node -> span.end = p -> cursor;
 
     return node;
 }

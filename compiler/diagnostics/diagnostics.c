@@ -533,7 +533,7 @@ void diagnostics_print(void) {
         );
         fprintf(stderr, "%s %s| %s", line_indent, ANSI_BOLD, ANSI_RESET);
 
-        u32 spaces =  diag.col - 1;
+        u32 spaces = diag.col - 1;
         fprintf(stderr, "%*s", spaces, "");
 
         fprintf(stderr, "%s%s", ANSI_GREEN, ANSI_BOLD);

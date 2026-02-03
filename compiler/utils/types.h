@@ -6,11 +6,13 @@
 *
 *   File structure: 
 *       1. Primitive types
-*       2. X-Macro helper for enums
+*       2. Type limits
+*       3. X-Macro helper for enums
 * 
 */
 
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -46,7 +48,26 @@ typedef ssize_t     isize;
 
 /*
 *
-*   2. X-Macro helper for enums
+*   2. Type limits
+*
+*/
+
+#define U8_MAX  UINT8_MAX
+#define U16_MAX UINT16_MAX
+#define U32_MAX UINT32_MAX
+#define U64_MAX UINT64_MAX
+
+#define I8_MAX  INT8_MAX
+#define I16_MAX INT16_MAX
+#define I32_MAX INT32_MAX
+#define I64_MAX INT64_MAX
+
+#define USIZE_MAX SIZE_MAX 
+#define ISIZE_MAX SSIZE_MAX 
+
+/*
+*
+*   3. X-Macro helper for enums
 *
 */
 
@@ -54,4 +75,3 @@ typedef ssize_t     isize;
 #define GENERATE_STRING(STRING) #STRING,
 
 #endif // !TYPES_H
-

@@ -48,6 +48,10 @@ i32 main(i32 argc, char* argv[]) {
 
     lex_from_files();
 
+    if (albedo_ctx.error_count > 0) {
+        goto compiler_exit;
+    }
+
     parse_tokens();
 
     #ifdef DEBUG_MODE
@@ -58,6 +62,7 @@ i32 main(i32 argc, char* argv[]) {
     print_ast(stdout, &albedo_ctx.ast, &albedo_ctx.tokens);
     #endif /* ifdef DEBUG_MODE */
 
+compiler_exit:
     if (albedo_ctx.error_count > 0) {
         diagnostics_print();
         buffer_cleanup();

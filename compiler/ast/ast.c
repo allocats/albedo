@@ -209,42 +209,42 @@ AstNode* ast_make_struct_init_node(AstNode* identifier) {
     return node;
 }
 
-AstNode* ast_make_loop_node(AstNode* block) {
+AstNode* ast_make_loop_node(void) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
     node -> kind = A_Loop;
 
-    node -> loop_loop.block = block; 
+    node -> loop_loop.block = null; 
 
     return node;
 }
 
-AstNode* ast_make_while_node(AstNode* condition, AstNode* block) {
+AstNode* ast_make_while_node(void) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
     node -> kind = A_While;
 
-    node -> while_loop.condition = condition; 
-    node -> while_loop.block = block; 
+    node -> while_loop.condition = null; 
+    node -> while_loop.block = null; 
 
     return node;
 }
 
-AstNode* ast_make_for_node(AstNode* iter, AstNode* condition, AstNode* step, AstNode* block) {
+AstNode* ast_make_for_node(void) {
     ArenaAllocator* arena = albedo_ctx.arena;
 
     AstNode* node = arena_alloc(arena, sizeof(*node));
 
     node -> kind = A_For;
 
-    node -> for_loop.iterator = iter; 
-    node -> for_loop.condition = condition; 
-    node -> for_loop.step = step; 
-    node -> for_loop.block = block; 
+    node -> for_loop.iterator = null; 
+    node -> for_loop.condition = null; 
+    node -> for_loop.step = null; 
+    node -> for_loop.block = null; 
 
     return node;
 }
