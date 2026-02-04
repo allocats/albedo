@@ -8,6 +8,7 @@
 #include "buffers/buffers.h"
 #include "diagnostics/diagnostics.h"
 #include "lexer/lexer.h"
+#include "modules/modules.h"
 #include "utils/ansi_codes.h"
 #include "utils/types.h"
 
@@ -53,6 +54,8 @@ i32 main(i32 argc, char* argv[]) {
     }
 
     parse_tokens();
+
+    resolve_modules();
 
     #ifdef DEBUG_MODE
     #include "ast/ast.h"

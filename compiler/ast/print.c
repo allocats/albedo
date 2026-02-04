@@ -132,25 +132,9 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
             ctx->depth++;
             ensure_context_capacity(ctx);
 
-            bool is_rel = node->import_decl.kind == ImportRel;
-            ctx->has_more[ctx->depth - 1] = true;
-
-            print_tree_indent(fd, ctx, false, false);
-            fprintf(fd, "Kind: %s\n", is_rel ? "Relative" : "Library");
-
+            ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
-            if (is_rel) {
-                fprintf(fd, "Path: \"%.*s\"\n", (i32)node->import_decl.relative.len, node->import_decl.relative.ptr);
-            } else {
-                fprintf(fd, "Path: ");
-                for (u32 i = 0; i < node->import_decl.lib.segment_count; i++) {
-                    print_segment(fd, node->import_decl.lib.segments[i]);
-                    if (i != node->import_decl.lib.segment_count - 1) {
-                        fprintf(fd, "::");
-                    }
-                }
-                fprintf(fd, "\n");
-            }
+            fprintf(fd, "\"%.*s\"\n", (i32)node -> import_decl.length, node -> import_decl.ptr);
 
             ctx->depth--;
             break;

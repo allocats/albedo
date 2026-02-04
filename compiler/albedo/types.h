@@ -5,6 +5,7 @@
 #include "../arena/arena.h"
 #include "../ast_parser/types.h"
 #include "../buffers/types.h"
+#include "../modules/types.h"
 #include "../token/types.h"
 
 #define FILE_INIT_CAPACITY 16
@@ -18,6 +19,7 @@ typedef struct {
 
     Tokens tokens;
     ParseTree ast;
+    ModuleLoader modules;
 
     u32 error_count;
 

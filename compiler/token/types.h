@@ -64,6 +64,7 @@
                     \
     X(T_Dot)        \
     X(T_DotDot)     \
+    X(T_DotDotDot)  \
                     \
     X(T_Arrow)      \
                     \

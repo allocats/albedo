@@ -1,3 +1,9 @@
+import "std/io";
+import "../foo";
+
+fn print(x: ...[1], t: i32) {
+}
+
 fn main() {
     loop {
         print("inf loop");

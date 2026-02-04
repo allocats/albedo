@@ -9,6 +9,33 @@ extern DiagnosticCtx diag_ctx;
 AstSpan parse_type_span(Parser* p) {
     u32 start = p -> cursor;
 
+    if (parser_check(p, T_DotDotDot)) {
+        parser_advance(p);
+    
+        if (parser_check(p, T_LBracket)) {
+            while (p -> cursor < p -> count && !parser_check(p, T_RBracket)) {
+                parser_advance(p);
+            }
+
+            if (!parser_check(p, T_RBracket)) {
+                err_ast_add(
+                    "expected closing ']'",
+                    "add a ']' here",
+                    parser_peek_prev(p),
+                    LOC_END_OF_TOK,
+                    p -> file_index
+                );
+
+                return (AstSpan) { .start_index = 0, .end_index = 0 };
+            }
+
+            parser_advance(p);
+            
+        }
+
+        return (AstSpan) { .start_index = start, .end_index = p -> cursor - 1 };
+    }
+
     if (parser_check(p, T_Const)) {
         parser_advance(p);
     }

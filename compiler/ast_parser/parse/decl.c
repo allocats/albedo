@@ -6,6 +6,7 @@
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
+extern AstNodeList import_nodes_list;
 
 AstNode* parse_module_decl(Parser* p) {
     AstNode* node = arena_alloc(albedo_ctx.arena, sizeof(*node));
@@ -78,79 +79,32 @@ AstNode* parse_module_decl(Parser* p) {
 AstNode* parse_import_decl(Parser* p) {
     AstNode* node = arena_alloc(albedo_ctx.arena, sizeof(*node));
     
-    node -> span.start = p -> cursor - 1;
+    node -> span.start = p -> cursor;
 
     node -> kind = A_Import;
 
-    if (parser_check(p, T_StrLit)) {
-        Token* token = parser_advance(p);
-        
-        node -> import_decl.kind = ImportRel; 
-        node -> import_decl.relative.ptr = token -> lexeme + 1;
-        node -> import_decl.relative.len = token -> length - 2;
+    Token* import_path = parser_peek(p);
 
-        return node;
-    }
-
-    if (!parser_check(p, T_Ident)) {
+    if (import_path -> kind != T_StrLit) {
         err_ast_add(
-            "expected identifier",
-            "add an identifier here",
+            "expected string literal",
+            "add a valid string literal here for import",
             parser_peek(p),
-            LOC_WHOLE_TOK,
+            LOC_WHOLE_LINE,
             p -> file_index
         );
 
         return top_level_decl_parse_fail(p, node);
     }
 
-    node -> import_decl.kind = ImportLib;
-
-    ast_init_lib_import(node);
-
-    while (p -> cursor < p -> count) {
-        Token* segment = parser_peek(p);
-
-        if (segment -> kind != T_Ident) {
-            err_ast_add(
-                "expected identifier",
-                "add an identifier here",
-                parser_peek_prev(p),
-                LOC_END_OF_TOK,
-                p -> file_index
-            );
-
-            return top_level_decl_parse_fail(p, node);
-        }
-
-        ast_import_lib_push(node, segment);
-
-        parser_advance(p);
-        
-        Token* token = parser_peek(p);
-
-        if (token -> kind == T_Semi) {
-            break;
-        }
-
-        if (token -> kind != T_ColonColon) {
-            err_ast_add(
-                "expected '::' or ';' after segment",
-                "add '::' or ';' here",
-                parser_peek_prev(p),
-                LOC_END_OF_TOK,
-                p -> file_index
-            );
-
-            return top_level_decl_parse_fail(p, node);
-        }
-
-        parser_advance(p);
-    }
+    node -> import_decl.ptr = import_path -> lexeme + 1;
+    node -> import_decl.length = import_path -> length - 2;
 
     node -> span.end = p -> cursor;
 
     parser_advance(p);
+
+    ast_node_list_push(&import_nodes_list, node);
 
     return node;
 }

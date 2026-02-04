@@ -1,12 +1,15 @@
 #include "albedo.h"
 
+#include "../ast/ast.h"
 #include "../buffers/buffers.h"
 #include "../diagnostics/types.h"
+#include "../modules/modules.h"
 
 #include <stdio.h>
 
 AlbedoCtx albedo_ctx = {0};
 DiagnosticCtx diag_ctx = {0};
+AstNodeList import_nodes_list = {0};
 
 #define TOKEN_INIT_CAPACITY 256
 #define AST_INIT_CAPACITY 64
@@ -40,4 +43,7 @@ void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
             printf("TODO: Flag = %s\n", argv[i]);
         } 
     }
+
+    ast_node_list_init(&import_nodes_list);
+    init_module_loader();
 }

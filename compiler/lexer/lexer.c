@@ -554,8 +554,15 @@ char* lex_op(char* cursor, u32 index) {
 
         case '.': {
             if (*cursor == '.') {
-                token -> kind = T_DotDot;
                 cursor++;
+
+                if (*cursor == '.') { 
+                    cursor++;
+                    token -> kind = T_DotDotDot;
+                    break;
+                }
+
+                token -> kind = T_DotDot;
                 break;
             }
             

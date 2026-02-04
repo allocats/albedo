@@ -43,16 +43,16 @@ AstNode* ast_make_struct_node(bool is_extern) {
     node -> kind = A_Struct;
     node -> struct_decl.is_extern = is_extern;
     node -> struct_decl.generics = arena_alloc(
-            arena,
-            sizeof(AstGenericParam) * FIELD_DEFAULT_CAP 
-            );
+        arena,
+        sizeof(AstGenericParam) * FIELD_DEFAULT_CAP
+    );
     node -> struct_decl.generic_count = 0;
     node -> struct_decl.generic_capacity = FIELD_DEFAULT_CAP;
 
     node -> struct_decl.fields = arena_alloc(
-            arena,
-            sizeof(AstField) * FIELD_DEFAULT_CAP
-            );
+        arena,
+        sizeof(AstField) * FIELD_DEFAULT_CAP
+    );
     node -> struct_decl.field_count = 0;
     node -> struct_decl.field_capacity = FIELD_DEFAULT_CAP;
 
@@ -403,41 +403,6 @@ void ast_module_segment_push(AstNode* node, Token* token) {
         .len = token -> length
     };
 }
-void ast_init_lib_import(AstNode* node) {
-    assert(node);
-
-    ArenaAllocator* arena = albedo_ctx.arena;
-
-    node -> import_decl.lib.segments = arena_alloc(
-        arena,
-        sizeof(AstSegment) * IMPORT_DEFAULT_CAP
-    );
-    node -> import_decl.lib.segment_count = 0;
-    node -> import_decl.lib.segment_capacity = IMPORT_DEFAULT_CAP;
-}
-
-void ast_import_lib_push(AstNode* node, Token* token) {
-    u32* count = &node -> import_decl.lib.segment_count;
-    u32* capacity = &node -> import_decl.lib.segment_capacity;
-
-    if (*count >= *capacity) {
-        usize size = *capacity * sizeof(AstSegment);
-
-        node -> import_decl.lib.segments = arena_realloc(
-            albedo_ctx.arena,
-            node -> import_decl.lib.segments,
-            size,
-            size * 2
-        );
-
-        *capacity *= 2;
-    }
-
-    node -> import_decl.lib.segments[(*count)++] = (AstSegment) {
-        .ptr = token -> lexeme,
-        .len = token -> length
-    };
-}
 
 void ast_fn_param_push(AstNode* node, AstParam param) {
     if (node -> function_decl.param_count >= node -> function_decl.param_capacity) {
@@ -616,4 +581,25 @@ void ast_ident_namespace_push(AstNode* node, Token* token) {
 
     node -> ident.len = token -> length;
     node -> ident.ptr = token -> lexeme;
+}
+
+/*
+*   AstNodeList functions
+*/
+
+void ast_node_list_init(AstNodeList* list) {
+    list -> nodes = arena_alloc(albedo_ctx.arena, sizeof(AstNode*) * LIST_DEFAULT_CAP);
+    list -> count = 0; 
+    list -> capacity = LIST_DEFAULT_CAP;
+}
+
+void ast_node_list_push(AstNodeList* list, AstNode* node) {
+    if (list -> count >= list -> capacity) {
+        usize size = list -> capacity * sizeof(AstNode*); 
+
+        list -> nodes = arena_realloc(albedo_ctx.arena, list -> nodes, size, size * 2);
+        list -> capacity *= 2;
+    }
+
+    list -> nodes[list -> count++] = node;
 }

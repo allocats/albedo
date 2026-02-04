@@ -9,6 +9,10 @@
 
 #include "types.h"
 
+#include "../ast_parser/types.h"
+
+#include <stdio.h>
+
 #define IMPORT_DEFAULT_CAP  8
 
 #define PARAM_DEFAULT_CAP   8
@@ -20,6 +24,7 @@
 #define MATCH_DEFAULT_CAP   8
 #define BLOCK_DEFAULT_CAP   8
 
+#define LIST_DEFAULT_CAP    32
 
 /*
 *   Node making function helpers
@@ -78,12 +83,14 @@ void ast_if_branch_push(AstNode* node, AstNode* condition, AstNode* block);
 void ast_ident_namespace_push(AstNode* node, Token* token);
 
 /*
+*   AstNodeList functions
+*/
+void ast_node_list_init(AstNodeList* list);
+void ast_node_list_push(AstNodeList* list, AstNode* node);
+
+/*
 *   Debugging
 */
-#include "../ast_parser/types.h"
-
-#include <stdio.h>
-
 void print_ast(FILE* fd, ParseTree* tree, Tokens* tokens);
 
 #endif // !AST_H

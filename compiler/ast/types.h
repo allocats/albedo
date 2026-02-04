@@ -87,31 +87,9 @@ typedef struct {
     u32 segment_capacity;
 } AstModule;
 
-// lib kind will check the user's libs directory for the module 
-// rel is a relative file to the current file
-typedef enum {
-    ImportLib,
-    ImportRel 
-} ImportKind;
-
-// if the import is a T_StrLit then it is relative
-// else if it is segments (e.g: std::io) then it 
-// is a library import
 typedef struct {
-    ImportKind kind;
-
-    union {
-        struct {
-            char* ptr;
-            usize len;
-        } relative;
-
-        struct {
-            AstSegment* segments;
-            u32 segment_count;
-            u32 segment_capacity;
-        } lib;
-    };
+    char* ptr;
+    usize length;
 } AstImport;
 
 typedef struct {
@@ -480,5 +458,11 @@ typedef struct AstNode {
         AstCast cast;
     };
 } AstNode;
+
+typedef struct {
+    AstNode** nodes;
+    usize count;
+    usize capacity;
+} AstNodeList;
 
 #endif // !ALBEDO_AST_TYPES_H
