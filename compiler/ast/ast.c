@@ -591,6 +591,7 @@ void ast_node_list_init(AstNodeList* list) {
     list -> nodes = arena_alloc(albedo_ctx.arena, sizeof(AstNode*) * LIST_DEFAULT_CAP);
     list -> count = 0; 
     list -> capacity = LIST_DEFAULT_CAP;
+    list -> processed = 0;
 }
 
 void ast_node_list_push(AstNodeList* list, AstNode* node) {

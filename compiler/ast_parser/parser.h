@@ -8,7 +8,7 @@
 
 void extend_parse_tree(ArenaAllocator* arenea, ParseTree* tree);
 
-void parse_tokens(void); 
+void parse_tokens(usize starting_token_index, usize starting_file_index);
 
 /*
 *   Parsing 

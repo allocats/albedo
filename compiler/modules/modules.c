@@ -1,7 +1,10 @@
 #include "modules.h"
 
 #include "../albedo/types.h"
+#include "../ast_parser/parser.h"
+#include "../buffers/buffers.h"
 #include "../hash/hash.h"
+#include "../lexer/lexer.h"
 #include "types.h"
 
 #include <assert.h>
@@ -9,25 +12,37 @@
 #include <stdio.h>
 #include <string.h>
 
+#define INIT_MODULE_CAPACITY 32
 #define PATH_LEN 1024
 
 extern AlbedoCtx albedo_ctx;
 extern AstNodeList import_nodes_list;
 
-void loader_add_module(char* path, usize len);
-ModuleNode* loader_get_module(u32 hash);
+char* HOME = null; 
+char* root = null;
 
-void init_module_loader(void) {
-    ModuleLoader* loader = &albedo_ctx.modules;
+void load_standard_library_modules(Modules* modules);
+void add_standard_library_module(Modules* modules, char* ptr, usize len);
+Module* get_standard_library_module(Modules* modules, u32 hash);
 
-    loader -> modules = arena_alloc(albedo_ctx.arena, sizeof(ModuleNode*) * INIT_MODULE_CAP);
-    loader -> module_count = 0;
-    loader -> module_capacity = INIT_MODULE_CAP;
+void add_imported_module(Modules* modules, Module module);
 
-    char* home = getenv("HOME");
-    char* root = arena_alloc(albedo_ctx.arena, PATH_LEN);
+void parse_module(Module* module);
 
-    snprintf(root, PATH_LEN - 1, "%s/%s", home, ".local/mythril");
+void init_module_system(Modules* std_modules) {
+    HOME = getenv("HOME");
+
+    std_modules -> items = arena_alloc(albedo_ctx.arena, sizeof(Module) * INIT_MODULE_CAPACITY);
+    std_modules -> count = 0;
+    std_modules -> capacity = INIT_MODULE_CAPACITY;
+
+    load_standard_library_modules(std_modules);
+}
+
+void load_standard_library_modules(Modules* modules) {
+    root = arena_alloc(albedo_ctx.arena, PATH_LEN);
+
+    snprintf(root, PATH_LEN - 1, "%s/%s", HOME, ".local/mythril");
 
     char* stack[256];
     usize top = 0;
@@ -60,7 +75,7 @@ void init_module_loader(void) {
                 usize length = strlen(entry -> d_name);
 
                 if (length > 5 && strcmp(entry -> d_name + length - 5, ".myth") == 0) {
-                    loader_add_module(entry_path, entry_len);
+                    add_standard_library_module(modules, entry_path, entry_len);
                 }
             }
         }
@@ -69,63 +84,82 @@ void init_module_loader(void) {
     }
 }
 
-void loader_add_module(char* path, usize len) {
-    u32 hash = fnv1a_hash(path, len);
+void add_standard_library_module(Modules* modules, char* ptr, usize len) {
+    if (modules -> count >= modules -> capacity) {
+        usize size = modules -> capacity * sizeof(Module);
 
-    ModuleLoader* loader = &albedo_ctx.modules;
-
-    if (loader -> module_count >= loader -> module_capacity) {
-        usize size = loader -> module_capacity * sizeof(ModuleNode*);
-
-        loader -> modules = arena_realloc(albedo_ctx.arena, loader -> modules, size, size * 2);
-        loader -> module_capacity *= 2;
+        modules -> items = arena_realloc(albedo_ctx.arena, modules -> items, size, size * 2); 
+        modules -> capacity *= 2;
     }
 
-    ModuleNode* module = loader_get_module(hash);
+    u32 hash = fnv1a_hash(ptr, len);
+    
+    Module module = {
+        .hash = hash,
+        .path = ptr,
+        .imported = false
+    };
 
-    if (module) return;
+    usize index = hash & (modules -> capacity - 1);
 
-    module = arena_alloc(albedo_ctx.arena, sizeof(*module));
-    module -> hash = hash;
-    module -> path = path;
+    modules -> items[index] = module;
+    modules -> count++;
 
-    loader -> module_count++;
-    loader -> modules[hash & (loader -> module_capacity - 1)] = module;
+    #ifdef DEBUG_MODE
+    printf("Loaded stdlib module: %s\n", ptr);
+    #endif /* ifdef DEBUG_MODE */
 }
 
-ModuleNode* loader_get_module(u32 hash) {
-    ModuleLoader* loader = &albedo_ctx.modules;
-    usize index = hash & (loader -> module_capacity - 1);
-    return loader -> modules[index];
+Module* get_standard_library_module(Modules* modules, u32 hash) {
+    usize index = hash & (modules -> capacity - 1); 
+    Module* module = &modules -> items[index];
+
+    if (module -> hash == 0) return null;
+    return module;
 }
 
-void resolve_modules(void) {
-    char root[PATH_LEN] = {0};
+void resolve_modules(Modules* std_modules) {
+    usize processed = 0;
 
-    char* home = getenv("HOME");
+    while (processed < import_nodes_list.count) {
+        AstNode* node = import_nodes_list.nodes[processed++];
 
-    snprintf(root, PATH_LEN - 1, "%s/%s", home, ".local/mythril");
-
-    for (usize i = 0; i < import_nodes_list.count; i++) {
-        AstNode* node = import_nodes_list.nodes[i];
+        char path[PATH_LEN];
 
         char* ptr = node -> import_decl.ptr;
-        usize len = node -> import_decl.length;
+        usize len = node -> import_decl.len;
 
-        char temp_c = ptr[len];
+        char temp_char = ptr[len];
         ptr[len] = 0;
 
-        char* module_path = arena_alloc(albedo_ctx.arena, PATH_LEN);
 
-        usize n = snprintf(module_path, PATH_LEN - 1, "%s/%s.myth", root, ptr);
-        u32 hash = fnv1a_hash(module_path, n);
+        usize n = snprintf(path, PATH_LEN - 1, "%s/%s.myth", root, ptr);
+        u32 hash = fnv1a_hash(path, n);
 
-        if (loader_get_module(hash)) {
-            printf("YAY\n");
+        Module* module = get_standard_library_module(std_modules, hash);
+
+        if (module) {
+            if (!module -> imported) {
+                parse_module(module);
+
+                module -> imported = true;
+            }
         } else {
-            printf("NO\n");
+            // TODO: Search relative, if not found then error
         }
 
-        ptr[len] = temp_c;
+        ptr[len] = temp_char;
     }
+}
+
+void parse_module(Module* module) {
+    #ifdef DEBUG_MODE
+    printf("Parsing module: %s\n", module -> path);
+    #endif /* ifdef DEBUG_MODE */
+
+    usize token_index = albedo_ctx.tokens.count;
+
+    map_file(module -> path);
+    lex_from_files(albedo_ctx.file_count - 1);
+    parse_tokens(token_index, albedo_ctx.file_count - 1);
 }

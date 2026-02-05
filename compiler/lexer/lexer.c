@@ -33,8 +33,8 @@ char* lex_invalid(char* cursor, u32 index);
 
 bool is_hex_digit(char c);
 
-void lex_from_files(void) {
-    for (u32 i = 0; i < albedo_ctx.file_count; i++) {
+void lex_from_files(usize start_index) {
+    for (usize i = start_index; i < albedo_ctx.file_count; i++) {
         FileBuffer file = albedo_ctx.files[i];
 
         char* cursor = file.buffer;

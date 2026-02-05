@@ -4,10 +4,7 @@
 
 #include "types.h"
 
-#define INIT_MODULE_CAP 32
-
-void init_module_loader(void);
-
-void resolve_modules(void);
+void init_module_system(Modules* std_modules);
+void resolve_modules(Modules* std_modules);
 
 #endif // !ALBEDO_MODULES_H

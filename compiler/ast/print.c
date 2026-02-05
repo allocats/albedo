@@ -134,7 +134,7 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
 
             ctx->has_more[ctx->depth - 1] = false;
             print_tree_indent(fd, ctx, true, false);
-            fprintf(fd, "\"%.*s\"\n", (i32)node -> import_decl.length, node -> import_decl.ptr);
+            fprintf(fd, "\"%.*s\"\n", (i32)node -> import_decl.len, node -> import_decl.ptr);
 
             ctx->depth--;
             break;
@@ -211,8 +211,14 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                 ctx->depth--;
             }
 
-            ctx->has_more[ctx->depth - 1] = true;
-            print_tree_indent(fd, ctx, false, false);
+            if (node -> function_decl.is_extern) {
+                ctx->has_more[ctx->depth - 1] = false;
+                print_tree_indent(fd, ctx, true, false);
+            } else {
+                ctx->has_more[ctx->depth - 1] = true;
+                print_tree_indent(fd, ctx, false, false);
+            }
+
             fprintf(fd, "Parameters [%u/%u]\n", node->function_decl.param_count, node->function_decl.param_capacity);
 
             if (node->function_decl.param_count > 0) {
@@ -229,12 +235,14 @@ void print_node_tree(FILE* fd, AstNode* node, Tokens* tokens, PrintContext* ctx,
                 ctx->depth--;
             }
 
-            ctx->has_more[ctx->depth - 1] = false;
-            print_tree_indent(fd, ctx, true, false);
-            fprintf(fd, "Body:\n");
-            ctx->depth++;
-            print_node_tree(fd, node->function_decl.body, tokens, ctx, true);
-            ctx->depth--;
+            if (!node->function_decl.is_extern) {
+                ctx->has_more[ctx->depth - 1] = false;
+                print_tree_indent(fd, ctx, true, false);
+                fprintf(fd, "Body:\n");
+                ctx->depth++;
+                print_node_tree(fd, node->function_decl.body, tokens, ctx, true);
+                ctx->depth--;
+            }
 
             ctx->depth--;
             break;

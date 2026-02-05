@@ -9,4 +9,6 @@
 void map_file(const char* path);
 void buffer_cleanup();
 
+void file_buffers_append(char* paths[], usize count);
+
 #endif // !ALBEDO_BUFFERS_H

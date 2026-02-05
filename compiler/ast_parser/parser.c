@@ -2,17 +2,17 @@
 
 #include "../albedo/types.h"
 #include "../diagnostics/diagnostics.h"
-#include "../token/token.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
 
-void parse_tokens(void) {
+void parse_tokens(usize starting_token_index, usize starting_file_index) {
     Parser parser = {
-        .file_index = 0,
-        .cursor = 0,
+        .file_index = starting_file_index,
+        .cursor = starting_token_index,
         .count = albedo_ctx.tokens.count
     };
 
@@ -32,7 +32,9 @@ void parse_tokens(void) {
             } break;
 
             case T_Extern: {
-                switch (parser_advance(&parser) -> kind) {
+                Token* next = parser_advance(&parser);
+
+                switch (next -> kind) {
                     case T_Fn: {
                         node = parse_fn_decl(&parser, true);
                     } break;
@@ -46,7 +48,9 @@ void parse_tokens(void) {
                     } break;
 
                     default: {
-                        assert(0 > 1 && "PANIC");
+                        // TODO: Error
+                        printf("Found: %s\n", TOKEN_KIND_STRINGS[next -> kind]);
+                        assert(0 > 1);
                     } break;
                 }
             } break;
@@ -96,6 +100,7 @@ void parse_tokens(void) {
         }
 
         if (node) {
+            node -> file_index = parser.file_index;
             albedo_ctx.ast.nodes[albedo_ctx.ast.count++] = node;
         }
     }

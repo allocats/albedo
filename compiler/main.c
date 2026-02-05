@@ -9,6 +9,7 @@
 #include "diagnostics/diagnostics.h"
 #include "lexer/lexer.h"
 #include "modules/modules.h"
+#include "modules/modules.h"
 #include "utils/ansi_codes.h"
 #include "utils/types.h"
 
@@ -16,6 +17,7 @@ static ArenaAllocator arena = {0};
 
 extern AlbedoCtx albedo_ctx;
 extern DiagnosticCtx diag_ctx;
+extern Modules stdlib_modules;
 
 i32 main(i32 argc, char* argv[]) {
     init_ansi_codes();
@@ -35,6 +37,7 @@ i32 main(i32 argc, char* argv[]) {
 
     init_arena(&arena, 66536);
     init_compiler(&arena, argc, argv);
+    init_module_system(&stdlib_modules);
 
     if (albedo_ctx.file_count == 0) {
         fprintf(
@@ -47,15 +50,15 @@ i32 main(i32 argc, char* argv[]) {
         );
     }
 
-    lex_from_files();
+    lex_from_files(0);
 
     if (albedo_ctx.error_count > 0) {
         goto compiler_exit;
     }
 
-    parse_tokens();
+    parse_tokens(0, 0);
 
-    resolve_modules();
+    resolve_modules(&stdlib_modules);
 
     #ifdef DEBUG_MODE
     #include "ast/ast.h"

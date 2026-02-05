@@ -98,7 +98,7 @@ AstNode* parse_import_decl(Parser* p) {
     }
 
     node -> import_decl.ptr = import_path -> lexeme + 1;
-    node -> import_decl.length = import_path -> length - 2;
+    node -> import_decl.len = import_path -> length - 2;
 
     node -> span.end = p -> cursor;
 
@@ -227,7 +227,7 @@ bool parse_params(Parser* p, AstNode* node) {
         err_ast_add(
             "expected ',' or ')' after parameter",
             "add a ',' or ')' here",
-            parser_peek_prev(p),
+    parser_peek_prev(p),
             LOC_END_OF_TOK,
             p -> file_index
         );

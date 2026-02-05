@@ -144,6 +144,7 @@ typedef struct {
     Token* items;
     usize count;
     usize capacity;
+    usize processed;
 } Tokens;
 
 #endif // !ALBEDO_TEN_TYPES_H

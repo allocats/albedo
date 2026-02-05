@@ -19,7 +19,6 @@ typedef struct {
 
     Tokens tokens;
     ParseTree ast;
-    ModuleLoader modules;
 
     u32 error_count;
 

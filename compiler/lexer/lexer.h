@@ -6,6 +6,6 @@
 
 #include "../token/types.h"
 
-void lex_from_files(void);
+void lex_from_files(usize start_index);
 
 #endif // !ALBEDO_LEXER_H

@@ -9,6 +9,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef DEBUG_MODE
+#include <stdio.h>
+#endif /* ifdef DEBUG_MOD */
+
 extern AlbedoCtx albedo_ctx;
 
 void map_file(const char* path) {
@@ -16,7 +20,12 @@ void map_file(const char* path) {
         usize size = albedo_ctx.file_capacity * sizeof(FileBuffer);
 
         albedo_ctx.file_capacity *= FB_GROWTH_FACTOR;
-        albedo_ctx.files = arena_realloc(albedo_ctx.arena, albedo_ctx.files, size, size * FB_GROWTH_FACTOR);
+        albedo_ctx.files = arena_realloc(
+            albedo_ctx.arena,
+            albedo_ctx.files,
+            size,
+            size * FB_GROWTH_FACTOR
+        );
     }
 
     i32 fd = open(path, O_RDONLY);
@@ -60,6 +69,10 @@ void map_file(const char* path) {
     fb -> buffer = buffer; 
     fb -> needs_free = true; 
     fb -> size = len;
+
+    #ifdef DEBUG_MODE
+    printf("Mapped file: %s\n", path);
+    #endif /* ifdef DEBUG_MODE */
 }
 
 void buffer_cleanup() {
@@ -70,5 +83,11 @@ void buffer_cleanup() {
             munmap(file -> buffer, file -> size); 
             file -> needs_free = false;
         }
+    }
+}
+
+void file_buffers_append(char* paths[], usize count) {
+    for (usize i = 0; i < count; i++) {
+        map_file(paths[i]);
     }
 }

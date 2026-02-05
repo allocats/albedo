@@ -15,6 +15,7 @@ typedef struct {
     AstNode** nodes;
     usize count;
     usize capacity;
+    usize processed;
 } ParseTree;
 
 typedef enum {

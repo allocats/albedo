@@ -89,7 +89,7 @@ typedef struct {
 
 typedef struct {
     char* ptr;
-    usize length;
+    usize len;
 } AstImport;
 
 typedef struct {
@@ -415,6 +415,8 @@ typedef struct {
 
 typedef struct AstNode {
     AstKind kind;
+
+    u32 file_index;
     ByteSpan span;
 
     union {
@@ -463,6 +465,7 @@ typedef struct {
     AstNode** nodes;
     usize count;
     usize capacity;
+    usize processed;
 } AstNodeList;
 
 #endif // !ALBEDO_AST_TYPES_H

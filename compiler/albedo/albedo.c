@@ -10,9 +10,11 @@
 AlbedoCtx albedo_ctx = {0};
 DiagnosticCtx diag_ctx = {0};
 AstNodeList import_nodes_list = {0};
+Modules stdlib_modules = {0};
 
-#define TOKEN_INIT_CAPACITY 256
-#define AST_INIT_CAPACITY 64
+#define TOKEN_INIT_CAPACITY  256
+#define AST_INIT_CAPACITY    64
+#define MODULE_INIT_CAPACITY 32
 
 void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     albedo_ctx.arena = arena;
@@ -45,5 +47,4 @@ void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     }
 
     ast_node_list_init(&import_nodes_list);
-    init_module_loader();
 }
