@@ -1,4 +1,4 @@
-import std::albedo;
+import "std/albedo";
 
 [align(16)]
 struct Vec3 {
