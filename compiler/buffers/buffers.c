@@ -15,7 +15,7 @@
 
 extern AlbedoCtx albedo_ctx;
 
-void map_file(const char* path) {
+bool map_file(const char* path) {
     if (albedo_ctx.file_count >= albedo_ctx.file_capacity) {
         usize size = albedo_ctx.file_capacity * sizeof(FileBuffer);
 
@@ -36,7 +36,7 @@ void map_file(const char* path) {
             err_cant_open_file(path);
         }
 
-        return;
+        return false;
     }
 
     struct stat st;
@@ -48,7 +48,7 @@ void map_file(const char* path) {
         }
 
         close(fd);
-        return;
+        return false;
     }
 
     usize len = st.st_size + 1;
@@ -58,7 +58,7 @@ void map_file(const char* path) {
     if (buffer == MAP_FAILED) {
         err_cant_map_file(path);
         close(fd);
-        return;
+        return false;
     }
 
     buffer[len - 1] = 0;
@@ -73,6 +73,8 @@ void map_file(const char* path) {
     #ifdef DEBUG_MODE
     printf("Mapped file: %s\n", path);
     #endif /* ifdef DEBUG_MODE */
+
+    return true;
 }
 
 void buffer_cleanup() {

@@ -3,6 +3,7 @@
 #include "../albedo/types.h"
 #include "../ast_parser/parser.h"
 #include "../buffers/buffers.h"
+#include "../diagnostics/diagnostics.h"
 #include "../hash/hash.h"
 #include "../lexer/lexer.h"
 #include "types.h"
@@ -27,7 +28,7 @@ Module* get_standard_library_module(Modules* modules, u32 hash);
 
 void add_imported_module(Modules* modules, Module module);
 
-void parse_file(const char* path);
+void parse_file(AstNode* node, const char* path);
 
 void init_module_system(Modules* std_modules) {
     HOME = getenv("HOME");
@@ -143,7 +144,7 @@ void resolve_modules(Modules* std_modules) {
 
         if (module) {
             if (!module -> imported) {
-                parse_file(module -> path);
+                parse_file(node, module -> path);
 
                 module -> imported = true;
             }
@@ -162,21 +163,31 @@ void resolve_modules(Modules* std_modules) {
                 snprintf(import_path, PATH_LEN, "%s.myth", ptr);
             }
 
-            parse_file(import_path);
+            parse_file(node, import_path);
         }
 
         ptr[len] = temp_char;
     }
 }
 
-void parse_file(const char* path) {
+void parse_file(AstNode* node, const char* path) {
     #ifdef DEBUG_MODE
     printf("Parsing imported file: %s\n", path);
     #endif /* ifdef DEBUG_MODE */
 
     usize token_index = albedo_ctx.tokens.count;
 
-    map_file(path);
+    if (!map_file(path)) {
+        err_ast_add(
+            "cannot find module",
+            null,
+            &albedo_ctx.tokens.items[node -> span.end],
+            LOC_WHOLE_TOK,
+            node -> file_index
+        );
+        return;
+    }
+
     lex_from_files(albedo_ctx.file_count - 1);
     parse_tokens(token_index, albedo_ctx.file_count - 1);
 }

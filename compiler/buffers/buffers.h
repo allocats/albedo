@@ -6,7 +6,7 @@
 
 #define FB_GROWTH_FACTOR 1.25
 
-void map_file(const char* path);
+bool map_file(const char* path);
 void buffer_cleanup();
 
 void file_buffers_append(char* paths[], usize count);
