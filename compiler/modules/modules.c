@@ -28,6 +28,7 @@ Module* get_standard_library_module(Modules* modules, u32 hash);
 void add_imported_module(Modules* modules, Module module);
 
 void parse_module(Module* module);
+void parse_file(const char* path);
 
 void init_module_system(Modules* std_modules) {
     HOME = getenv("HOME");
@@ -145,7 +146,25 @@ void resolve_modules(Modules* std_modules) {
                 module -> imported = true;
             }
         } else {
-            // TODO: Search relative, if not found then error
+            FileBuffer buffer = albedo_ctx.files[node -> file_index];
+
+            const char* source_path = buffer.path;
+            const char* last_slash = strrchr(source_path, '/');
+
+            if (!last_slash) {
+                parse_file(path);
+                ptr[len] = temp_char;
+                return;
+            }
+
+            usize length_to_slash = last_slash - source_path + 1; 
+            char import_file_path[PATH_LEN] = {0}; 
+
+            strncpy(import_file_path, source_path, length_to_slash);
+            strncpy(import_file_path + length_to_slash, ptr, len);
+            strncpy(import_file_path + length_to_slash + len, ".myth", 5);
+
+            parse_file(import_file_path);
         }
 
         ptr[len] = temp_char;
@@ -160,6 +179,18 @@ void parse_module(Module* module) {
     usize token_index = albedo_ctx.tokens.count;
 
     map_file(module -> path);
+    lex_from_files(albedo_ctx.file_count - 1);
+    parse_tokens(token_index, albedo_ctx.file_count - 1);
+}
+
+void parse_file(const char* path) {
+    #ifdef DEBUG_MODE
+    printf("Parsing imported file: %s\n", path);
+    #endif /* ifdef DEBUG_MODE */
+
+    usize token_index = albedo_ctx.tokens.count;
+
+    map_file(path);
     lex_from_files(albedo_ctx.file_count - 1);
     parse_tokens(token_index, albedo_ctx.file_count - 1);
 }

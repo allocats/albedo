@@ -1,5 +1,4 @@
 import "std/io";
-import "../foo";
 
 fn main() {
     loop {
