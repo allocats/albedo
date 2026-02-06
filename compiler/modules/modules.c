@@ -27,7 +27,6 @@ Module* get_standard_library_module(Modules* modules, u32 hash);
 
 void add_imported_module(Modules* modules, Module module);
 
-void parse_module(Module* module);
 void parse_file(const char* path);
 
 void init_module_system(Modules* std_modules) {
@@ -134,7 +133,7 @@ void resolve_modules(Modules* std_modules) {
         ptr[len] = 0;
 
         #ifdef DEBUG_MODE
-        printf("resolve_modules: string = '%.*s'\n", len, ptr);
+        printf("resolve_modules: string = '%.*s'\n", (i32) len, ptr);
         #endif /* ifdef DEBUG_MODE */
 
         usize n = snprintf(path, PATH_LEN - 1, "%s/%s.myth", root, ptr);
@@ -144,7 +143,7 @@ void resolve_modules(Modules* std_modules) {
 
         if (module) {
             if (!module -> imported) {
-                parse_module(module);
+                parse_file(module -> path);
 
                 module -> imported = true;
             }
@@ -168,18 +167,6 @@ void resolve_modules(Modules* std_modules) {
 
         ptr[len] = temp_char;
     }
-}
-
-void parse_module(Module* module) {
-    #ifdef DEBUG_MODE
-    printf("Parsing module: %s\n", module -> path);
-    #endif /* ifdef DEBUG_MODE */
-
-    usize token_index = albedo_ctx.tokens.count;
-
-    map_file(module -> path);
-    lex_from_files(albedo_ctx.file_count - 1);
-    parse_tokens(token_index, albedo_ctx.file_count - 1);
 }
 
 void parse_file(const char* path) {
