@@ -133,6 +133,9 @@ void resolve_modules(Modules* std_modules) {
         char temp_char = ptr[len];
         ptr[len] = 0;
 
+        #ifdef DEBUG_MODE
+        printf("resolve_modules: string = '%.*s'\n", len, ptr);
+        #endif /* ifdef DEBUG_MODE */
 
         usize n = snprintf(path, PATH_LEN - 1, "%s/%s.myth", root, ptr);
         u32 hash = fnv1a_hash(path, n);
@@ -151,20 +154,16 @@ void resolve_modules(Modules* std_modules) {
             const char* source_path = buffer.path;
             const char* last_slash = strrchr(source_path, '/');
 
-            if (!last_slash) {
-                parse_file(path);
-                ptr[len] = temp_char;
-                return;
+            char import_path[PATH_LEN] = {0};
+
+            if (last_slash) {
+                usize dir_length = last_slash - source_path + 1;
+                snprintf(import_path, PATH_LEN, "%.*s%s.myth", (i32) dir_length, source_path, ptr); 
+            } else {
+                snprintf(import_path, PATH_LEN, "%s.myth", ptr);
             }
 
-            usize length_to_slash = last_slash - source_path + 1; 
-            char import_file_path[PATH_LEN] = {0}; 
-
-            strncpy(import_file_path, source_path, length_to_slash);
-            strncpy(import_file_path + length_to_slash, ptr, len);
-            strncpy(import_file_path + length_to_slash + len, ".myth", 5);
-
-            parse_file(import_file_path);
+            parse_file(import_path);
         }
 
         ptr[len] = temp_char;
