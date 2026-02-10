@@ -166,7 +166,7 @@ void print_arena_stats(const ArenaAllocator* arena) {
     printf("=== Arena Stats ===\n\n");
     printf("    Capacity: %zu\n", capacity);
     printf("    Usage: %zu\n", usage);
-    printf("    Precentage: %.4f%%\n\n", (double)usage / (double)capacity * 100);
+    printf("    Percentage: %.4f%%\n\n", (double)usage / (double)capacity * 100);
     printf("=== Arena Stats ===\n\n");
 }
 
