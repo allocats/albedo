@@ -66,6 +66,7 @@ i32 main(i32 argc, char* argv[]) {
 
     print_tokens(albedo_ctx.tokens);
     print_ast(stdout, &albedo_ctx.ast, &albedo_ctx.tokens);
+    print_arena_stats(&arena);
     #endif /* ifdef DEBUG_MODE */
 
 compiler_exit:

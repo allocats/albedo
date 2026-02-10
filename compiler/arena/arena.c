@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
 
@@ -156,6 +157,17 @@ void arena_free(ArenaAllocator* arena) {
 
     arena -> start = NULL;
     arena -> end = NULL;
+}
+
+void print_arena_stats(const ArenaAllocator* arena) {
+    size_t usage = total_usage(arena);
+    size_t capacity = total_capacity(arena);
+
+    printf("=== Arena Stats ===\n\n");
+    printf("    Capacity: %zu\n", capacity);
+    printf("    Usage: %zu\n", usage);
+    printf("    Precentage: %.4f%%\n\n", (double)usage / (double)capacity * 100);
+    printf("=== Arena Stats ===\n\n");
 }
 
 size_t total_capacity(const ArenaAllocator* arena) {

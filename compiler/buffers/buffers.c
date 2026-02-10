@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -16,6 +17,11 @@
 extern AlbedoCtx albedo_ctx;
 
 bool map_file(const char* path) {
+    // TODO: This is a little hacky, shuold rather just build into a module?
+    for (usize i = 0; i < albedo_ctx.file_count; i++) {
+        if (strcmp(path, albedo_ctx.files[i].path) == 0) return true;
+    }
+
     if (albedo_ctx.file_count >= albedo_ctx.file_capacity) {
         usize size = albedo_ctx.file_capacity * sizeof(FileBuffer);
 

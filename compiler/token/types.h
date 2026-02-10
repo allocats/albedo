@@ -136,8 +136,8 @@ static const char* TOKEN_KIND_STRINGS[] = {
 
 typedef struct {
     TokenKind kind;
-    char* lexeme;
     u32 length;
+    char* lexeme;
 } Token;
 
 typedef struct {
