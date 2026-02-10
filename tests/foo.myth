@@ -1,15 +1,7 @@
 import "std/io";
 
 fn main() {
-    loop {
-        print("inf loop");
-    }
-
-    for x: u32 = 0; i < 10; i += 1 {
-        print("for loop");
-    }
-
-    while true && 1 {
-        print("while loop");
+    for i: i32 = 0; i < 10; i += 1 {
+        println("FOOOOOOOO\n");
     }
 }
