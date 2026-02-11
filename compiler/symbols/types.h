@@ -23,25 +23,31 @@ static const char* SYMBOL_KIND_STRINGS[] = {
 // maybe tagged union here, but for now just use 
 // ast node? might be simpler + reduced memory overhead
 
+typedef struct SymbolTable SymbolTable;
+typedef struct Symbol Symbol;
+
+typedef struct {
+    bool is_extern : 1;
+    bool is_inline : 1;
+    bool is_static : 1;
+} SymbolFlags;
+
 typedef struct Symbol {
+    SymbolFlags flags;
     SymbolKind kind;
     u32 hash;
 
     AstNode* ast_node;
 
-    bool is_private;
-    bool is_external;
-    u32 times_called;
-
-    struct Symbol* next;
+    Symbol* next;
 } Symbol;
 
 typedef struct SymbolTable {
-    struct SymbolTable* next_scope;
+    SymbolTable* next_scope;
 
     Symbol** symbols;
-    usize symbol_count;
-    usize symbol_capacity;
+    usize count;
+    usize capacity;
 } SymbolTable;
 
 #endif // !ALBEDO_SYMBOLS_TYPES_H

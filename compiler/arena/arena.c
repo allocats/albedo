@@ -99,7 +99,7 @@ void* arena_alloc(ArenaAllocator* arena, const size_t size) {
         block = new_block(arena -> default_capacity, size);
         arena -> end = block;
         arena -> start = arena -> end;
-    } 
+    }
 
     const size_t usage = block -> usage;
     const size_t capacity = block -> capacity;
