@@ -9,9 +9,13 @@
 #include "diagnostics/diagnostics.h"
 #include "lexer/lexer.h"
 #include "modules/modules.h"
-#include "modules/modules.h"
+#include "semantics/semantics.h"
 #include "utils/ansi_codes.h"
 #include "utils/types.h"
+
+#ifdef DEBUG_MODE
+#include <assert.h>
+#endif /* ifdef DEBUG_MODE */
 
 static ArenaAllocator arena = {0};
 
@@ -20,6 +24,14 @@ extern DiagnosticCtx diag_ctx;
 extern Modules stdlib_modules;
 
 i32 main(i32 argc, char* argv[]) {
+    #ifdef DEBUG_MODE
+    static_assert(sizeof(Token) == 16, "Token is not 16 bytes");
+    static_assert(sizeof(Symbol) == 32, "Symbol is not 32 bytes");
+
+    // Need to rethink AstNode design
+    static_assert(sizeof(AstNode) == 88, "Symbol is not 88 bytes");
+    #endif /* ifdef DEBUG_MODE */
+
     init_ansi_codes();
 
     if (argc < 2) {
@@ -59,6 +71,8 @@ i32 main(i32 argc, char* argv[]) {
     parse_tokens(0, 0);
 
     resolve_modules(&stdlib_modules);
+
+    declare_symbols();
 
     #ifdef DEBUG_MODE
     #include "ast/ast.h"
