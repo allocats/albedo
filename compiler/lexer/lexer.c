@@ -190,6 +190,11 @@ char* lex_word(char* cursor) {
                 break;
             }
 
+            if (matches("inline", start, length)) {
+                token -> kind = T_Inline;
+                break;
+            }
+
             token -> kind = T_Ident;
         } break;
 

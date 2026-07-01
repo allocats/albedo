@@ -227,7 +227,7 @@ bool parse_params(Parser* p, AstNode* node) {
         err_ast_add(
             "expected ',' or ')' after parameter",
             "add a ',' or ')' here",
-    parser_peek_prev(p),
+            parser_peek_prev(p),
             LOC_END_OF_TOK,
             p -> file_index
         );

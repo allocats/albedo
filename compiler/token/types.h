@@ -14,6 +14,7 @@
     X(T_Defer)      \
                     \
     X(T_Extern)     \
+    X(T_Inline)     \
                     \
     X(T_Struct)     \
     X(T_Enum)       \

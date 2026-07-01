@@ -3,6 +3,7 @@
 #include "../ast/ast.h"
 #include "../buffers/buffers.h"
 #include "../diagnostics/types.h"
+#include "../type_system/ty.h"
 
 #include <stdio.h>
 
@@ -32,6 +33,7 @@ void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     albedo_ctx.ast.nodes = arena_alloc(arena, sizeof(AstNode*) * AST_INIT_CAPACITY);
     albedo_ctx.ast.count = 0;
     albedo_ctx.ast.capacity = AST_INIT_CAPACITY;
+    albedo_ctx.ast.processed = 0;
 
     diag_ctx.diag_count = 0;
     diag_ctx.diag_capacity = 32;
@@ -46,6 +48,7 @@ void init_compiler(ArenaAllocator* arena, i32 argc, char* argv[]) {
     }
 
     ast_node_list_init(&import_nodes_list);
-
+    init_type_table();
+    register_builtin_types();
     // init_symbol_table(&albedo_ctx.global_scope);
 }

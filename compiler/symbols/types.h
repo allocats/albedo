@@ -1,16 +1,19 @@
 #pragma once
-#ifndef ALBEDO_SYMBOLS_TYPES_H
-#define ALBEDO_SYMBOLS_TYPES_H
+#ifndef ALBEDO_SYMBOL_TYPES_H
+#define ALBEDO_SYMBOL_TYPES_H
 
-#include "../ast/types.h"
-#include "../types/types.h"
+#include "../ast_new/types.h"
 #include "../utils/types.h"
+
+// Thanks C standard :3
+typedef struct SymbolTable SymbolTable;
 
 #define X_SYMBOLS(X)    \
     X(S_Function)       \
+    X(S_Parameter)      \
     X(S_Constant)       \
     X(S_Variable)       \
-    X(S_Type)           \
+    X(S_TypeDecl)       \
 
 typedef enum __attribute__((packed)) {
     X_SYMBOLS(GENERATE_ENUM)
@@ -20,34 +23,26 @@ static const char* SYMBOL_KIND_STRINGS[] = {
     X_SYMBOLS(GENERATE_STRING)
 };
 
-typedef struct SymbolTable SymbolTable;
-typedef struct Symbol Symbol;
-
 typedef struct {
     bool is_extern : 1;
     bool is_inline : 1;
     bool is_static : 1;
+    bool is_const  : 1;
 } SymbolFlags;
 
-typedef struct Symbol {
-    SymbolFlags flags;
-    SymbolKind kind;
-
-    u8 __padding[2];
-    u32 scope_id;
-
-    u32 name_id;
-    u32 name_hash;
-
+typedef struct {
     AstNode* ast_node;
 
+    SymbolKind kind;
+    SymbolFlags flags;
+
+    u32 hash;
+
     union {
-        struct { u32 param_count;   } fn;
-        struct { u32 type_id;       } var;
-        struct { u32 type_id;       } type;
-        struct { u32 value_index;   } constant;
-        struct { u32 field_index;   } field;
-    };
+        struct {
+            u32 index;
+        } param;
+    } as;
 } Symbol;
 
 typedef struct SymbolTable {
@@ -56,14 +51,9 @@ typedef struct SymbolTable {
     u32 symbol_capacity;
 
     u32* slots;
-    u32 slot_count;
     u32 slot_capacity;
 
-    u32* scope_stack;
-    u32 scope_depth;
-    u32 scope_capacity;
-
-    u32 current_scope_index;
+    SymbolTable* parent_scope;
 } SymbolTable;
 
-#endif // !ALBEDO_SYMBOLS_TYPES_H
+#endif // !ALBEDO_SYMBOL_TYPES_H

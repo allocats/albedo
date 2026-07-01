@@ -3,11 +3,11 @@
 #define ALBEDO_TYPES_H
 
 #include "../arena/arena.h"
-#include "../ast_parser/types.h"
+#include "../ast_new/types.h"
 #include "../buffers/types.h"
 #include "../modules/types.h"
-#include "../symbols/types.h"
 #include "../token/types.h"
+#include "../type_system/types.h"
 
 #define FILE_INIT_CAPACITY 16
 
@@ -19,9 +19,7 @@ typedef struct {
     u32 file_capacity;
 
     Tokens tokens;
-    ParseTree ast;
-
-    SymbolTable global_scope;
+    AST ast;
 
     u32 error_count;
 

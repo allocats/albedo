@@ -3,6 +3,7 @@
 
 #include "albedo/albedo.h"
 #include "albedo/types.h"
+#include "ast/types.h"
 #include "ast_parser/parser.h"
 #include "arena/arena.h"
 #include "buffers/buffers.h"
@@ -10,7 +11,9 @@
 #include "lexer/lexer.h"
 #include "modules/modules.h"
 #include "semantics/semantics.h"
+#include "symbols/symbols.h"
 #include "utils/ansi_codes.h"
+#include "utils/timer.h"
 #include "utils/types.h"
 
 #ifdef DEBUG_MODE
@@ -26,10 +29,10 @@ extern Modules stdlib_modules;
 i32 main(i32 argc, char* argv[]) {
     #ifdef DEBUG_MODE
     static_assert(sizeof(Token) == 16, "Token is not 16 bytes");
-    static_assert(sizeof(Symbol) == 32, "Symbol is not 32 bytes");
+    static_assert(sizeof(Symbol) == 24, "Symbol is not 32 bytes");
 
     // Need to rethink AstNode design
-    static_assert(sizeof(AstNode) == 88, "Symbol is not 88 bytes");
+    static_assert(sizeof(AstNode) == 88, "AstNode is not 88 bytes");
     #endif /* ifdef DEBUG_MODE */
 
     init_ansi_codes();
@@ -62,6 +65,10 @@ i32 main(i32 argc, char* argv[]) {
         );
     }
 
+    Timer timer = {0};
+
+    timer_start(&timer);
+
     lex_from_files(0);
 
     if (albedo_ctx.error_count > 0) {
@@ -73,6 +80,8 @@ i32 main(i32 argc, char* argv[]) {
     resolve_modules(&stdlib_modules);
 
     declare_symbols();
+
+    timer_end(&timer);
 
     #ifdef DEBUG_MODE
     #include "ast/ast.h"
@@ -105,10 +114,11 @@ compiler_exit:
 
     fprintf(
         stderr,
-        "\ncompiled %s%ssuccessfully%s\n",
+        "\ncompiled %s%ssuccessfully%s in %.3fms\n",
         ANSI_BOLD,
         ANSI_MAGENTA,
-        ANSI_RESET
+        ANSI_RESET,
+        time_elapsed_in_ms(timer)
     );
 
     buffer_cleanup();

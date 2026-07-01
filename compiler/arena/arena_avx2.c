@@ -67,6 +67,7 @@ void* arena_realloc_avx2(ArenaAllocator* arena, void* ptr, const size_t old_size
 
     const __m256i zeros = _mm256_setzero_si256();
     size_t zero_size = new_size - old_size;
+
     while (zero_size >= 128) {
         _mm256_store_si256((__m256i*) AVX2_CHUNK(new_ptr, 0), zeros);
         _mm256_store_si256((__m256i*) AVX2_CHUNK(new_ptr, 1), zeros);
